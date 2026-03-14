@@ -1,0 +1,39 @@
+"use client";
+
+import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Moon, Sun, LogOut } from "lucide-react";
+
+export function Header() {
+  const { theme, setTheme } = useTheme();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await fetch("/api/auth", { method: "DELETE" });
+    router.push("/login");
+    router.refresh();
+  }
+
+  return (
+    <header className="flex h-14 items-center justify-end gap-2 border-b bg-background px-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        aria-label="Toggle theme"
+      >
+        <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+        <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleLogout}
+        aria-label="Logout"
+      >
+        <LogOut className="h-4 w-4" />
+      </Button>
+    </header>
+  );
+}
