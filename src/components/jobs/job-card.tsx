@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import {
   Briefcase,
   DollarSign,
   Star,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { type JobCard, STATUS_COLORS } from "@/lib/jobs-types";
 
@@ -26,6 +29,8 @@ export function JobCardComponent({
   onEdit,
   onDelete,
 }: JobCardComponentProps) {
+  const [expanded, setExpanded] = useState(false);
+
   const salaryDisplay =
     job.expectedSalary != null
       ? `$${job.expectedSalary.toLocaleString()}`
@@ -33,89 +38,139 @@ export function JobCardComponent({
 
   return (
     <Card
-      className={`border-l-4 transition-shadow hover:shadow-md ${STATUS_COLORS[job.status]}`}
+      className={`border-l-4 transition-shadow hover:shadow-md py-2 ${STATUS_COLORS[job.status]}`}
     >
-      <CardContent className="space-y-2.5 p-3">
-        {/* Header: Company & Actions */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-semibold">{job.position}</h3>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Building2 className="h-3 w-3 shrink-0" />
-              <span className="truncate">{job.company}</span>
-              {job.companyLink && (
-                <a
-                  href={job.companyLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-0.5 text-muted-foreground hover:text-foreground"
+      <CardContent className={`${expanded ? "space-y-2.5 p-3" : "px-2 py-0"}`}>
+        {/* Header: Title, Company & Actions */}
+        <div className="flex items-center justify-between gap-1">
+          <div
+            className="min-w-0 flex-1 cursor-pointer"
+            onClick={() => setExpanded((prev) => !prev)}
+          >
+            <div
+              className={`flex items-center gap-1.5 ${expanded ? "flex-col items-start" : ""}`}
+            >
+              <div className="flex items-center gap-1 text-xs">
+                {expanded && <Building2 className="h-3 w-3 shrink-0" />}
+                <span
+                  className={`truncate font-semibold ${expanded ? "" : "text-xs"}`}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
+                  {job.company}
+                </span>
+                {job.applicationLink && (
+                  <a
+                    href={job.applicationLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-0.5 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+              <h3
+                className={`truncate ${expanded ? "text-sm" : "text-[10px]"} text-muted-foreground`}
+              >
+                {expanded ? job.position : `· ${job.position}`}
+              </h3>
             </div>
           </div>
-          <div className="flex shrink-0 gap-1">
+          <div className="flex shrink-0 gap-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
-              onClick={() => onEdit(job)}
+              className="h-5 w-5"
+              onClick={() => setExpanded((prev) => !prev)}
             >
-              <Pencil className="h-3 w-3" />
+              {expanded ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-destructive hover:text-destructive"
-              onClick={() => onDelete(job._id)}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            {expanded && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5"
+                  onClick={() => onEdit(job)}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-destructive hover:text-destructive"
+                  onClick={() => onDelete(job._id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Info Row */}
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="outline" className="gap-1 text-[10px]">
-            <MapPin className="h-2.5 w-2.5" />
-            {job.country}
-          </Badge>
-          <Badge variant="outline" className="text-[10px]">
-            {job.workStyle}
-          </Badge>
-          <Badge variant="outline" className="gap-1 text-[10px]">
-            <Briefcase className="h-2.5 w-2.5" />
-            {job.level}
-          </Badge>
-        </div>
+        {/* Expanded details */}
+        {expanded && (
+          <>
+            {/* Company Link */}
+            {job.companyLink && (
+              <a
+                href={job.companyLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Company Website
+              </a>
+            )}
 
-        {/* Bottom Row */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-0.5">
-              <DollarSign className="h-3 w-3" />
-              {salaryDisplay}
-            </span>
-            <span className="flex items-center gap-0.5">
-              <Star className="h-3 w-3" />
-              {job.fitPercentage}/10
-            </span>
-          </div>
-          <span className="text-[10px]">{job.applicationMethod}</span>
-        </div>
+            {/* Info Row */}
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="outline" className="gap-1 text-[10px]">
+                <MapPin className="h-2.5 w-2.5" />
+                {job.country}
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">
+                {job.workStyle}
+              </Badge>
+              <Badge variant="outline" className="gap-1 text-[10px]">
+                <Briefcase className="h-2.5 w-2.5" />
+                {job.level}
+              </Badge>
+            </div>
 
-        {/* Application Link */}
-        {job.applicationLink && (
-          <a
-            href={job.applicationLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
-          >
-            <ExternalLink className="h-3 w-3" />
-            Application Link
-          </a>
+            {/* Bottom Row */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-0.5">
+                  <DollarSign className="h-3 w-3" />
+                  {salaryDisplay}
+                </span>
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3" />
+                  {job.fitPercentage}/10
+                </span>
+              </div>
+              <span className="text-[10px]">{job.applicationMethod}</span>
+            </div>
+
+            {/* Application Link */}
+            {job.applicationLink && (
+              <a
+                href={job.applicationLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Application Link
+              </a>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
