@@ -40,12 +40,14 @@ export function JobCardComponent({
     <Card
       className={`border-l-4 transition-shadow hover:shadow-md py-2 ${STATUS_COLORS[job.status]}`}
     >
-      <CardContent className={`${expanded ? "space-y-2.5 p-3" : "px-2 py-0"}`}>
+      <CardContent
+        className={`${expanded ? "space-y-2.5 px-3 py-0" : "px-2 py-0"}`}
+      >
         {/* Header: Title, Company & Actions */}
         <div className="flex items-center justify-between gap-1">
           <div
             className="min-w-0 flex-1 cursor-pointer"
-            onClick={() => setExpanded((prev) => !prev)}
+            onClick={() => (expanded ? setExpanded(false) : onEdit(job))}
           >
             <div
               className={`flex items-center gap-1.5 ${expanded ? "flex-col items-start" : ""}`}
@@ -77,18 +79,6 @@ export function JobCardComponent({
             </div>
           </div>
           <div className="flex shrink-0 gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 w-5"
-              onClick={() => setExpanded((prev) => !prev)}
-            >
-              {expanded ? (
-                <ChevronUp className="h-3 w-3" />
-              ) : (
-                <ChevronDown className="h-3 w-3" />
-              )}
-            </Button>
             {expanded && (
               <>
                 <Button
@@ -109,6 +99,18 @@ export function JobCardComponent({
                 </Button>
               </>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setExpanded((prev) => !prev)}
+            >
+              {expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
 

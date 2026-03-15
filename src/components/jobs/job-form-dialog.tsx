@@ -26,6 +26,16 @@ import {
   APPLICATION_METHODS,
 } from "@/lib/jobs-types";
 
+const POSITION_OPTIONS = [
+  "Game Developer",
+  "XR Developer",
+  "Backend",
+  "Frontend",
+  "Software Engineer",
+];
+
+const COUNTRY_OPTIONS = ["KSA", "UAE", "USA", "UK", "Germany", "Remote"];
+
 interface JobFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,8 +46,8 @@ interface JobFormDialogProps {
 
 const defaultFormData: JobCardFormData = {
   company: "",
-  position: "",
-  country: "",
+  position: "Software Engineer",
+  country: "KSA",
   workStyle: "Remote",
   expectedSalary: null,
   fitPercentage: 5,
@@ -87,15 +97,15 @@ export function JobFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Job Application" : "Add Job Application"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
-          {/* Company & Position */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Row 1: Company, Level, Position */}
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="company">Company *</Label>
               <Input
@@ -106,54 +116,6 @@ export function JobFormDialog({
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="position">Position *</Label>
-              <Input
-                id="position"
-                value={form.position}
-                onChange={(e) => update("position", e.target.value)}
-                placeholder="Software Engineer"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Country & Work Style */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="country">Country *</Label>
-              <Input
-                id="country"
-                value={form.country}
-                onChange={(e) => update("country", e.target.value)}
-                placeholder="United States"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Work Style *</Label>
-              <Select
-                value={form.workStyle}
-                onValueChange={(v) =>
-                  update("workStyle", v as JobCardFormData["workStyle"])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORK_STYLES.map((ws) => (
-                    <SelectItem key={ws} value={ws}>
-                      {ws}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Level & Status */}
-          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Level *</Label>
               <Select
@@ -175,20 +137,18 @@ export function JobFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Status *</Label>
+              <Label>Position *</Label>
               <Select
-                value={form.status}
-                onValueChange={(v) =>
-                  update("status", v as JobCardFormData["status"])
-                }
+                value={form.position}
+                onValueChange={(v) => update("position", v)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {JOB_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
+                  {POSITION_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -196,7 +156,72 @@ export function JobFormDialog({
             </div>
           </div>
 
-          {/* Salary & Fit */}
+          {/* Row 2: Work Style, Country, Application Method */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label>Work Style *</Label>
+              <Select
+                value={form.workStyle}
+                onValueChange={(v) =>
+                  update("workStyle", v as JobCardFormData["workStyle"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WORK_STYLES.map((ws) => (
+                    <SelectItem key={ws} value={ws}>
+                      {ws}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Country *</Label>
+              <Select
+                value={form.country}
+                onValueChange={(v) => update("country", v)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="KSA" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>App Method *</Label>
+              <Select
+                value={form.applicationMethod}
+                onValueChange={(v) =>
+                  update(
+                    "applicationMethod",
+                    v as JobCardFormData["applicationMethod"],
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPLICATION_METHODS.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Row 3: Expected Salary, Resume ID */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="salary">Expected Salary</Label>
@@ -215,76 +240,52 @@ export function JobFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="fit">Fit (1-10) *</Label>
+              <Label htmlFor="resumeId">Resume ID</Label>
               <Input
-                id="fit"
-                type="number"
-                value={form.fitPercentage}
-                onChange={(e) =>
-                  update("fitPercentage", Number(e.target.value))
-                }
-                min={1}
-                max={10}
-                required
+                id="resumeId"
+                value={form.resumeId}
+                onChange={(e) => update("resumeId", e.target.value)}
+                placeholder="e.g. resume-v2"
               />
             </div>
           </div>
 
-          {/* Application Method */}
+          {/* Row 4: Fit Level Slider */}
           <div className="space-y-1.5">
-            <Label>Application Method *</Label>
-            <Select
-              value={form.applicationMethod}
-              onValueChange={(v) =>
-                update(
-                  "applicationMethod",
-                  v as JobCardFormData["applicationMethod"],
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {APPLICATION_METHODS.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="fit">
+              Fit Level:{" "}
+              <span className="font-semibold">{form.fitPercentage}/10</span>
+            </Label>
+            <input
+              id="fit"
+              type="range"
+              min={1}
+              max={10}
+              value={form.fitPercentage}
+              onChange={(e) => update("fitPercentage", Number(e.target.value))}
+              className="w-full accent-primary"
+            />
           </div>
 
-          {/* Links */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="appLink">Application Link</Label>
-              <Input
-                id="appLink"
-                value={form.applicationLink}
-                onChange={(e) => update("applicationLink", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="companyLink">Company Link</Label>
-              <Input
-                id="companyLink"
-                value={form.companyLink}
-                onChange={(e) => update("companyLink", e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
-
-          {/* Resume ID */}
+          {/* Row 5: Application Link */}
           <div className="space-y-1.5">
-            <Label htmlFor="resumeId">Resume ID</Label>
+            <Label htmlFor="appLink">Application Link</Label>
             <Input
-              id="resumeId"
-              value={form.resumeId}
-              onChange={(e) => update("resumeId", e.target.value)}
-              placeholder="e.g. resume-v2"
+              id="appLink"
+              value={form.applicationLink}
+              onChange={(e) => update("applicationLink", e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
+          {/* Row 6: Company Link */}
+          <div className="space-y-1.5">
+            <Label htmlFor="companyLink">Company Link</Label>
+            <Input
+              id="companyLink"
+              value={form.companyLink}
+              onChange={(e) => update("companyLink", e.target.value)}
+              placeholder="https://..."
             />
           </div>
 

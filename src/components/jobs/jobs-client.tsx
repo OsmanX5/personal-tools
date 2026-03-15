@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { KanbanBoard } from "@/components/jobs/kanban-board";
 import { JobFormDialog } from "@/components/jobs/job-form-dialog";
 import type { JobCard, JobCardFormData, JobStatus } from "@/lib/jobs-types";
+
+const POSITION_FILTERS = [
+  "All",
+  "Game Developer",
+  "XR Developer",
+  "Backend",
+  "Frontend",
+  "Software Engineer",
+] as const;
 
 export default function JobsClient() {
   const [jobs, setJobs] = useState<JobCard[]>([]);
@@ -12,6 +21,8 @@ export default function JobsClient() {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobCard | null>(null);
+  const [countryFilter, setCountryFilter] = useState("KSA");
+  const [positionFilter, setPositionFilter] = useState("All");
 
   // Fetch all jobs
   const fetchJobs = useCallback(async () => {
@@ -109,6 +120,22 @@ export default function JobsClient() {
     }
   };
 
+  const countries = useMemo(() => {
+    const set = new Set(jobs.map((j) => j.country));
+    return ["All", ...Array.from(set).sort()];
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((j) => {
+      const matchCountry =
+        countryFilter === "All" || j.country === countryFilter;
+      const matchPosition =
+        positionFilter === "All" ||
+        j.position.toLowerCase().includes(positionFilter.toLowerCase());
+      return matchCountry && matchPosition;
+    });
+  }, [jobs, countryFilter, positionFilter]);
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -124,14 +151,39 @@ export default function JobsClient() {
         <div>
           <h1 className="text-2xl font-bold">Job Applications</h1>
           <p className="text-sm text-muted-foreground">
-            {jobs.length} application{jobs.length !== 1 ? "s" : ""} tracked
+            {filteredJobs.length} of {jobs.length} application
+            {jobs.length !== 1 ? "s" : ""} shown
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1 text-sm"
+          >
+            {countries.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select
+            value={positionFilter}
+            onChange={(e) => setPositionFilter(e.target.value)}
+            className="rounded-md border bg-background px-2 py-1 text-sm"
+          >
+            {POSITION_FILTERS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Kanban Board */}
       <KanbanBoard
-        jobs={jobs}
+        jobs={filteredJobs}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onStatusChange={handleStatusChange}
