@@ -1,4 +1,10 @@
-import { LucideIcon, DollarSign, Briefcase } from "lucide-react";
+import {
+  LucideIcon,
+  DollarSign,
+  Briefcase,
+  Weight,
+  Receipt,
+} from "lucide-react";
 
 export interface ToolConfig {
   /** Display name of the tool */
@@ -30,7 +36,15 @@ export const tools: ToolConfig[] = [
     slug: "finance",
     description: "Track income, expenses, and view spending summaries.",
     icon: DollarSign,
-    status: "coming-soon",
+    status: "active",
+  },
+  {
+    name: "Budget Planner",
+    slug: "budget",
+    description:
+      "Track expenses, set category budgets, and plan future financial goals.",
+    icon: Receipt,
+    status: "active",
   },
   {
     name: "Job Applications",
@@ -38,6 +52,13 @@ export const tools: ToolConfig[] = [
     description:
       "Track job applications, statuses, and follow-ups in one place.",
     icon: Briefcase,
+    status: "active",
+  },
+  {
+    name: "Weight Tracker",
+    slug: "weight",
+    description: "Log weight, track BMI automatically, and set weight goals.",
+    icon: Weight,
     status: "active",
   },
 ];

@@ -4,22 +4,23 @@ A modular collection of personal productivity tools built with Next.js, MongoDB,
 
 ## Tech Stack
 
-| Layer       | Technology                          |
-| ----------- | ----------------------------------- |
-| Framework   | Next.js 16 (App Router, TypeScript) |
-| Styling     | Tailwind CSS v4 + shadcn/ui         |
-| Database    | MongoDB via Mongoose                |
-| Auth        | iron-session (encrypted cookie)     |
-| Validation  | Zod                                 |
-| Icons       | Lucide React                        |
-| Hosting     | Render (Web Service)                |
+| Layer      | Technology                          |
+| ---------- | ----------------------------------- |
+| Framework  | Next.js 16 (App Router, TypeScript) |
+| Styling    | Tailwind CSS v4 + shadcn/ui         |
+| Database   | MongoDB via Mongoose                |
+| Auth       | iron-session (encrypted cookie)     |
+| Validation | Zod                                 |
+| Icons      | Lucide React                        |
+| Hosting    | Render (Web Service)                |
 
 ## Current Tools
 
-| Tool                     | Status       |
-| ------------------------ | ------------ |
-| Finance Tracker          | Coming Soon  |
-| Job Applications Tracker | Coming Soon  |
+| Tool                     | Status      |
+| ------------------------ | ----------- |
+| Finance Tracker          | Coming Soon |
+| Job Applications Tracker | Coming Soon |
+| Weight Tracker           | Active      |
 
 ## Project Structure
 
@@ -192,11 +193,11 @@ The app auto-deploys on every push to `main`.
 
 ## Environment Variables
 
-| Variable         | Required | Description                                |
-| ---------------- | -------- | ------------------------------------------ |
-| `MONGODB_URI`    | Yes      | MongoDB connection string                  |
-| `APP_PASSWORD`   | Yes      | Password for the login gate                |
-| `SESSION_SECRET` | Yes      | Encryption key for cookies (min 32 chars)  |
+| Variable         | Required | Description                                  |
+| ---------------- | -------- | -------------------------------------------- |
+| `MONGODB_URI`    | Yes      | MongoDB connection string                    |
+| `APP_PASSWORD`   | Yes      | Password for the login gate                  |
+| `SESSION_SECRET` | Yes      | Encryption key for cookies (min 32 chars)    |
 | `NODE_ENV`       | No       | Set to `production` in deployed environments |
 
 ## License
