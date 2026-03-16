@@ -21,7 +21,7 @@ export default function JobsClient() {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<JobCard | null>(null);
-  const [countryFilter, setCountryFilter] = useState("KSA");
+  const [countryFilter, setCountryFilter] = useState("All");
   const [positionFilter, setPositionFilter] = useState("All");
 
   // Fetch all jobs
