@@ -16,7 +16,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 // 1. Define a TypeScript interface for your document
-export interface IfinanceAccount extends Document {
+export interface INetWorthAccount extends Document {
   name: string;
   description?: string;
   status: "active" | "archived";
@@ -80,7 +80,7 @@ const TransactionSchema = new Schema<Transaction>(
   { _id: true, timestamps: { createdAt: "date", updatedAt: false } },
 );
 // 2. Define the Mongoose schema
-const FinanceAccountSchema = new Schema<IfinanceAccount>(
+const NetWorthAccountSchema = new Schema<INetWorthAccount>(
   {
     name: {
       type: String,
@@ -136,8 +136,8 @@ const FinanceAccountSchema = new Schema<IfinanceAccount>(
 );
 
 // 3. Export the model (with protection against re-compilation in dev)
-const FinanceAccount: Model<IfinanceAccount> =
-  mongoose.models.FinanceAccount ||
-  mongoose.model<IfinanceAccount>("FinanceAccount", FinanceAccountSchema);
+const NetWorthAccount: Model<INetWorthAccount> =
+  mongoose.models.NetWorthAccount ||
+  mongoose.model<INetWorthAccount>("NetWorthAccount", NetWorthAccountSchema);
 
-export default FinanceAccount;
+export default NetWorthAccount;

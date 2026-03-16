@@ -33,9 +33,10 @@ export interface ToolConfig {
  */
 export const tools: ToolConfig[] = [
   {
-    name: "Finance Tracker",
-    slug: "finance",
-    description: "Track income, expenses, and view spending summaries.",
+    name: "NetWorth",
+    slug: "networth",
+    description:
+      "Track accounts, transactions, and view your net worth across currencies.",
     icon: DollarSign,
     status: "active",
   },

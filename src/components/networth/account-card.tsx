@@ -10,11 +10,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 import type {
-  FinanceAccount,
+  NetWorthAccount,
   Currency,
   ExchangeRates,
-} from "@/lib/finance-types";
-import { CURRENCY_SYMBOLS } from "@/lib/finance-types";
+} from "@/lib/networth-types";
+import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
 
 const PURPOSE_COLOR_MAP: Record<string, string> = {
   Savings: "border-l-green-500",
@@ -38,13 +38,14 @@ export const TRANSACTION_ICON: Record<string, React.ReactNode> = {
 };
 
 interface AccountListItemProps {
-  account: FinanceAccount;
+  account: NetWorthAccount;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
   selected: boolean;
-  onSelect: (account: FinanceAccount) => void;
-  onAddTransaction: (account: FinanceAccount) => void;
-  onUpdateValue: (account: FinanceAccount) => void;
+  onSelect: (account: NetWorthAccount) => void;
+  onEdit: (account: NetWorthAccount) => void;
+  onAddTransaction: (account: NetWorthAccount) => void;
+  onUpdateValue: (account: NetWorthAccount) => void;
 }
 
 export function convertAmount(
@@ -64,6 +65,7 @@ export function AccountListItem({
   exchangeRates,
   selected,
   onSelect,
+  onEdit,
   onAddTransaction,
   onUpdateValue,
 }: AccountListItemProps) {
@@ -80,6 +82,7 @@ export function AccountListItem({
     <Card
       className={`cursor-pointer border-l-4 transition-all hover:shadow-md ${PURPOSE_COLOR_MAP[account.purpose] ?? "border-l-gray-500"} ${selected ? (PURPOSE_SELECTED_MAP[account.purpose] ?? "bg-gray-100 dark:bg-gray-950/60") : ""}`}
       onClick={() => onSelect(account)}
+      onDoubleClick={() => onEdit(account)}
     >
       <CardContent className="flex items-center gap-3 px-3">
         {/* Name + original value */}

@@ -4,46 +4,45 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { AccountListItem } from "@/components/finance/account-card";
-import { AccountFormDialog } from "@/components/finance/account-form-dialog";
-import { TransactionDialog } from "@/components/finance/transaction-dialog";
-import { TransactionDetailPanel } from "@/components/finance/transaction-detail-panel";
-import { NetWorthSummary } from "@/components/finance/net-worth-summary";
+import { AccountListItem } from "@/components/networth/account-card";
+import { AccountFormDialog } from "@/components/networth/account-form-dialog";
+import { TransactionDialog } from "@/components/networth/transaction-dialog";
+import { TransactionDetailPanel } from "@/components/networth/transaction-detail-panel";
+import { NetWorthSummary } from "@/components/networth/net-worth-summary";
 import type {
-  FinanceAccount,
-  FinanceAccountFormData,
+  NetWorthAccount,
+  NetWorthAccountFormData,
   TransactionType,
   Currency,
   ExchangeRates,
   AccountPurpose,
-} from "@/lib/finance-types";
+} from "@/lib/networth-types";
 import {
   CURRENCIES,
   CURRENCY_SYMBOLS,
   ACCOUNT_PURPOSES,
-} from "@/lib/finance-types";
+} from "@/lib/networth-types";
 
-export default function FinanceClient() {
-  const [accounts, setAccounts] = useState<FinanceAccount[]>([]);
+export default function NetWorthClient() {
+  const [accounts, setAccounts] = useState<NetWorthAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<FinanceAccount | null>(
+  const [editingAccount, setEditingAccount] = useState<NetWorthAccount | null>(
     null,
   );
 
   const [txDialogOpen, setTxDialogOpen] = useState(false);
-  const [txAccount, setTxAccount] = useState<FinanceAccount | null>(null);
+  const [txAccount, setTxAccount] = useState<NetWorthAccount | null>(null);
   const [txMode, setTxMode] = useState<"transaction" | "update-value">(
     "transaction",
   );
 
-  const [selectedAccount, setSelectedAccount] = useState<FinanceAccount | null>(
-    null,
-  );
+  const [selectedAccount, setSelectedAccount] =
+    useState<NetWorthAccount | null>(null);
 
-  const updateAccount = useCallback((updated: FinanceAccount) => {
+  const updateAccount = useCallback((updated: NetWorthAccount) => {
     setAccounts((prev) =>
       prev.map((a) => (a._id === updated._id ? updated : a)),
     );
@@ -59,7 +58,7 @@ export default function FinanceClient() {
 
   const fetchAccounts = useCallback(async () => {
     try {
-      const res = await fetch("/api/finance");
+      const res = await fetch("/api/networth");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setAccounts(data);
@@ -72,7 +71,7 @@ export default function FinanceClient() {
 
   const fetchExchangeRates = useCallback(async () => {
     try {
-      const res = await fetch("/api/finance/exchange-rates");
+      const res = await fetch("/api/networth/exchange-rates");
       if (!res.ok) throw new Error("Failed to fetch rates");
       const data = await res.json();
       setExchangeRates(data);
@@ -86,11 +85,11 @@ export default function FinanceClient() {
     fetchExchangeRates();
   }, [fetchAccounts, fetchExchangeRates]);
 
-  const handleAccountSubmit = async (data: FinanceAccountFormData) => {
+  const handleAccountSubmit = async (data: NetWorthAccountFormData) => {
     setSaving(true);
     try {
       if (editingAccount) {
-        const res = await fetch(`/api/finance/${editingAccount._id}`, {
+        const res = await fetch(`/api/networth/${editingAccount._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -100,7 +99,7 @@ export default function FinanceClient() {
         updateAccount(updated);
         toast.success("Account updated");
       } else {
-        const res = await fetch("/api/finance", {
+        const res = await fetch("/api/networth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
@@ -121,7 +120,7 @@ export default function FinanceClient() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/finance/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/networth/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
       setAccounts((prev) => prev.filter((a) => a._id !== id));
       setSelectedAccount((prev) => (prev?._id === id ? null : prev));
@@ -137,7 +136,7 @@ export default function FinanceClient() {
   ) => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/finance/${accountId}/transactions`, {
+      const res = await fetch(`/api/networth/${accountId}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -162,7 +161,7 @@ export default function FinanceClient() {
   ) => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/finance/${accountId}/transactions`, {
+      const res = await fetch(`/api/networth/${accountId}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ newAmount, updateKind }),
@@ -232,7 +231,7 @@ export default function FinanceClient() {
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Finance Tracker</h1>
+          <h1 className="text-2xl font-bold">NetWorth</h1>
           <p className="text-sm text-muted-foreground">
             {accounts.length} account{accounts.length !== 1 ? "s" : ""} — Total:{" "}
             <span className="font-semibold text-foreground">
@@ -303,6 +302,10 @@ export default function FinanceClient() {
                 exchangeRates={exchangeRates}
                 selected={selectedAccount?._id === account._id}
                 onSelect={setSelectedAccount}
+                onEdit={(a) => {
+                  setEditingAccount(a);
+                  setAccountDialogOpen(true);
+                }}
                 onAddTransaction={(a) => {
                   setTxAccount(a);
                   setTxMode("transaction");

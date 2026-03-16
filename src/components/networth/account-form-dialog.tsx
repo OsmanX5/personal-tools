@@ -19,27 +19,27 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
-  FinanceAccount,
-  FinanceAccountFormData,
-} from "@/lib/finance-types";
+  NetWorthAccount,
+  NetWorthAccountFormData,
+} from "@/lib/networth-types";
 import {
   ACCOUNT_PURPOSES,
   ACCOUNT_LOCATIONS,
   ACCOUNT_LIQUIDITIES,
   CURRENCIES,
   CURRENCY_SYMBOLS,
-} from "@/lib/finance-types";
-import type { Currency } from "@/lib/finance-types";
+} from "@/lib/networth-types";
+import type { Currency } from "@/lib/networth-types";
 
 interface AccountFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: FinanceAccountFormData) => void;
-  initialData?: FinanceAccount | null;
+  onSubmit: (data: NetWorthAccountFormData) => void;
+  initialData?: NetWorthAccount | null;
   loading?: boolean;
 }
 
-const defaultFormData: FinanceAccountFormData = {
+const defaultFormData: NetWorthAccountFormData = {
   name: "",
   description: "",
   status: "active",
@@ -58,7 +58,7 @@ export function AccountFormDialog({
   initialData,
   loading,
 }: AccountFormDialogProps) {
-  const [form, setForm] = useState<FinanceAccountFormData>(
+  const [form, setForm] = useState<NetWorthAccountFormData>(
     initialData
       ? {
           name: initialData.name,
@@ -79,9 +79,9 @@ export function AccountFormDialog({
     onSubmit(form);
   };
 
-  const update = <K extends keyof FinanceAccountFormData>(
+  const update = <K extends keyof NetWorthAccountFormData>(
     key: K,
-    value: FinanceAccountFormData[K],
+    value: NetWorthAccountFormData[K],
   ) => setForm((prev) => ({ ...prev, [key]: value }));
 
   return (
@@ -161,7 +161,7 @@ export function AccountFormDialog({
                   key={p}
                   type="button"
                   onClick={() =>
-                    update("purpose", p as FinanceAccountFormData["purpose"])
+                    update("purpose", p as NetWorthAccountFormData["purpose"])
                   }
                   className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
                     i > 0 ? "border-l" : ""
@@ -186,7 +186,7 @@ export function AccountFormDialog({
                   key={l}
                   type="button"
                   onClick={() =>
-                    update("location", l as FinanceAccountFormData["location"])
+                    update("location", l as NetWorthAccountFormData["location"])
                   }
                   className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
                     i > 0 ? "border-l" : ""
@@ -213,7 +213,7 @@ export function AccountFormDialog({
                   onClick={() =>
                     update(
                       "liquidity",
-                      l as FinanceAccountFormData["liquidity"],
+                      l as NetWorthAccountFormData["liquidity"],
                     )
                   }
                   className={`flex-1 px-2 py-1.5 text-sm transition-colors ${

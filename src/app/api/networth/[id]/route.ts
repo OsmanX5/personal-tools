@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import FinanceAccount from "@/models/finance_account";
+import NetWorthAccount from "@/models/networth_account";
 
 export async function GET(
   _request: NextRequest,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   await dbConnect();
   const { id } = await params;
-  const account = await FinanceAccount.findById(id);
+  const account = await NetWorthAccount.findById(id);
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
@@ -22,7 +22,7 @@ export async function PUT(
   await dbConnect();
   const { id } = await params;
   const body = await request.json();
-  const account = await FinanceAccount.findByIdAndUpdate(id, body, {
+  const account = await NetWorthAccount.findByIdAndUpdate(id, body, {
     new: true,
     runValidators: true,
   });
@@ -40,7 +40,7 @@ export async function DELETE(
 ) {
   await dbConnect();
   const { id } = await params;
-  const account = await FinanceAccount.findByIdAndDelete(id);
+  const account = await NetWorthAccount.findByIdAndDelete(id);
 
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });

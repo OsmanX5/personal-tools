@@ -23,8 +23,8 @@ import {
   PLAN_PRIORITIES,
   PLAN_STATUSES,
 } from "@/lib/budget-types";
-import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/finance-types";
-import type { Currency } from "@/lib/finance-types";
+import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import type { Currency } from "@/lib/networth-types";
 import type { PlanPriority, PlanStatus } from "@/lib/budget-types";
 
 interface PlanFormDialogProps {

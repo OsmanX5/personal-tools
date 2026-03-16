@@ -23,8 +23,8 @@ import type {
   ExpenseCategory,
 } from "@/lib/budget-types";
 import { EXPENSE_CATEGORIES } from "@/lib/budget-types";
-import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/finance-types";
-import type { Currency } from "@/lib/finance-types";
+import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import type { Currency } from "@/lib/networth-types";
 
 interface BudgetFormDialogProps {
   open: boolean;

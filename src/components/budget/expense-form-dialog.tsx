@@ -22,8 +22,8 @@ import {
   EXPENSE_CATEGORIES,
   RECURRING_FREQUENCIES,
 } from "@/lib/budget-types";
-import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/finance-types";
-import type { Currency } from "@/lib/finance-types";
+import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import type { Currency } from "@/lib/networth-types";
 import type { ExpenseCategory, RecurringFrequency } from "@/lib/budget-types";
 
 interface ExpenseFormDialogProps {

@@ -11,8 +11,8 @@ import {
   CATEGORY_COLORS,
   convertAmount,
 } from "@/lib/budget-types";
-import { CURRENCY_SYMBOLS } from "@/lib/finance-types";
-import type { Currency, ExchangeRates } from "@/lib/finance-types";
+import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import type { Currency, ExchangeRates } from "@/lib/networth-types";
 
 interface BudgetOverviewProps {
   budgets: CategoryBudget[];

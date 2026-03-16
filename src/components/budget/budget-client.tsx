@@ -21,8 +21,8 @@ import type {
   FuturePlanFormData,
   ExpenseCategory,
 } from "@/lib/budget-types";
-import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/finance-types";
-import type { Currency, ExchangeRates } from "@/lib/finance-types";
+import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import type { Currency, ExchangeRates } from "@/lib/networth-types";
 import { convertAmount } from "@/lib/budget-types";
 
 type Tab = "expenses" | "budgets" | "plans";
@@ -107,7 +107,7 @@ export default function BudgetClient() {
 
   const fetchExchangeRates = useCallback(async () => {
     try {
-      const res = await fetch("/api/finance/exchange-rates");
+      const res = await fetch("/api/networth/exchange-rates");
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       setExchangeRates(data);

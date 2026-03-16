@@ -1,4 +1,4 @@
-import type { Currency, ExchangeRates } from "@/lib/finance-types";
+import type { Currency, ExchangeRates } from "@/lib/networth-types";
 
 // ── Expense ──────────────────────────────────────────────────────────
 

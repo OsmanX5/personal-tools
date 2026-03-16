@@ -17,15 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FinanceAccount, TransactionType } from "@/lib/finance-types";
-import { TRANSACTION_TYPES, CURRENCY_SYMBOLS } from "@/lib/finance-types";
+import type { NetWorthAccount, TransactionType } from "@/lib/networth-types";
+import { TRANSACTION_TYPES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
 
 type Mode = "transaction" | "update-value";
 
 interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  account: FinanceAccount | null;
+  account: NetWorthAccount | null;
   mode: Mode;
   onSubmitTransaction: (
     accountId: string,

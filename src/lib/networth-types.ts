@@ -56,7 +56,7 @@ export interface TransactionData {
   type: TransactionType;
 }
 
-export interface FinanceAccount {
+export interface NetWorthAccount {
   _id: string;
   name: string;
   description?: string;
@@ -72,8 +72,8 @@ export interface FinanceAccount {
   transactions: TransactionData[];
 }
 
-export type FinanceAccountFormData = Omit<
-  FinanceAccount,
+export type NetWorthAccountFormData = Omit<
+  NetWorthAccount,
   "_id" | "createdAt" | "updatedAt" | "transactions"
 >;
 

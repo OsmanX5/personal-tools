@@ -18,19 +18,19 @@ import {
 import {
   TRANSACTION_ICON,
   convertAmount,
-} from "@/components/finance/account-card";
+} from "@/components/networth/account-card";
 import type {
-  FinanceAccount,
+  NetWorthAccount,
   Currency,
   ExchangeRates,
-} from "@/lib/finance-types";
-import { CURRENCY_SYMBOLS } from "@/lib/finance-types";
+} from "@/lib/networth-types";
+import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
 
 interface TransactionDetailPanelProps {
-  account: FinanceAccount;
+  account: NetWorthAccount;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
-  onEdit: (account: FinanceAccount) => void;
+  onEdit: (account: NetWorthAccount) => void;
   onDelete: (id: string) => void;
 }
 

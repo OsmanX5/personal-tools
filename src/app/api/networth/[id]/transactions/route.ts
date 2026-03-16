@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
-import FinanceAccount from "@/models/finance_account";
+import NetWorthAccount from "@/models/networth_account";
 
-// POST /api/finance/[id]/transactions
+// POST /api/networth/[id]/transactions
 // Adds a transaction and updates the account amount accordingly
 export async function POST(
   request: NextRequest,
@@ -12,7 +12,7 @@ export async function POST(
   const { id } = await params;
   const body = await request.json();
 
-  const account = await FinanceAccount.findById(id);
+  const account = await NetWorthAccount.findById(id);
   if (!account) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }

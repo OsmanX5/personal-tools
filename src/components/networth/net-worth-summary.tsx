@@ -12,11 +12,13 @@ import {
   CartesianGrid,
 } from "recharts";
 import type {
-  FinanceAccount,
+  NetWorthAccount,
   Currency,
   ExchangeRates,
-} from "@/lib/finance-types";
-import { CURRENCY_SYMBOLS } from "@/lib/finance-types";
+} from "@/lib/networth-types";
+import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
+
+type BreakdownGroup = "account" | "currency" | "liquidity" | "purpose";
 
 const PIE_COLORS = [
   "#22c55e", // green
@@ -32,7 +34,7 @@ const PIE_COLORS = [
 ];
 
 interface NetWorthSummaryProps {
-  accounts: FinanceAccount[];
+  accounts: NetWorthAccount[];
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
 }
@@ -55,24 +57,36 @@ export function NetWorthSummary({
 }: NetWorthSummaryProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
 
-  // Pie chart data: each account's value in display currency
+  const [view, setView] = useState<"breakdown" | "trend">("breakdown");
+  const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("12m");
+  const [breakdownGroup, setBreakdownGroup] =
+    useState<BreakdownGroup>("account");
+
+  // Breakdown bar data: grouped by account / currency / liquidity
   const pieData = useMemo(() => {
-    return accounts
-      .map((a) => ({
-        name: a.name,
-        value: Math.max(
-          0,
-          convertAmount(
-            a.amount,
-            a.currency ?? "USD",
-            displayCurrency,
-            exchangeRates,
-          ),
-        ),
-      }))
+    const groupMap = new Map<string, number>();
+    for (const a of accounts) {
+      const key =
+        breakdownGroup === "account"
+          ? a.name
+          : breakdownGroup === "currency"
+            ? (a.currency ?? "USD")
+            : breakdownGroup === "liquidity"
+              ? (a.liquidity ?? "Other")
+              : (a.purpose ?? "Other");
+      const converted = convertAmount(
+        a.amount,
+        a.currency ?? "USD",
+        displayCurrency,
+        exchangeRates,
+      );
+      groupMap.set(key, (groupMap.get(key) ?? 0) + converted);
+    }
+    return Array.from(groupMap.entries())
+      .map(([name, value]) => ({ name, value: Math.max(0, value) }))
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [accounts, displayCurrency, exchangeRates]);
+  }, [accounts, displayCurrency, exchangeRates, breakdownGroup]);
 
   const total = useMemo(
     () => pieData.reduce((sum, d) => sum + d.value, 0),
@@ -215,9 +229,6 @@ export function NetWorthSummary({
     });
   }, [accounts, displayCurrency, exchangeRates]);
 
-  const [view, setView] = useState<"breakdown" | "trend">("breakdown");
-  const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("12m");
-
   return (
     <div className="flex flex-col h-full min-h-0 gap-2">
       {/* Selector row — above the card */}
@@ -240,6 +251,33 @@ export function NetWorthSummary({
             </button>
           ))}
         </div>
+        {view === "breakdown" && (
+          <div className="flex rounded-md border text-xs">
+            {(
+              [
+                ["account", "Account"],
+                ["currency", "Currency"],
+                ["liquidity", "Liquidity"],
+                ["purpose", "Purpose"],
+              ] as [BreakdownGroup, string][]
+            ).map(([key, label], i) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setBreakdownGroup(key)}
+                className={`px-3 py-1 transition-colors ${
+                  i > 0 ? "border-l" : ""
+                } ${
+                  breakdownGroup === key
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {view === "trend" && (
           <div className="flex rounded-md border text-xs">
             {(["12m", "30d"] as const).map((p, i) => (
