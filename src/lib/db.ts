@@ -39,6 +39,7 @@ async function dbConnect(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      dbName: process.env.MONGODB_DB_NAME || "personal-tools",
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((m) => m);

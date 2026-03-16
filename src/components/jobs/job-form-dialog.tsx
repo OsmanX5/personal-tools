@@ -66,6 +66,11 @@ export function JobFormDialog({
   initialData,
   loading,
 }: JobFormDialogProps) {
+  const isCustomCountry = initialData
+    ? !COUNTRY_OPTIONS.includes(initialData.country)
+    : false;
+  const [otherCountry, setOtherCountry] = useState(isCustomCountry);
+
   const [form, setForm] = useState<JobCardFormData>(
     initialData
       ? {
@@ -140,7 +145,9 @@ export function JobFormDialog({
               <Label>Position *</Label>
               <Select
                 value={form.position}
-                onValueChange={(v) => update("position", v)}
+                onValueChange={(v) => {
+                  if (v) update("position", v);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -180,21 +187,52 @@ export function JobFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Country *</Label>
-              <Select
-                value={form.country}
-                onValueChange={(v) => update("country", v)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="KSA" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COUNTRY_OPTIONS.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {otherCountry ? (
+                <div className="flex gap-1">
+                  <Input
+                    value={form.country}
+                    onChange={(e) => update("country", e.target.value)}
+                    placeholder="Enter country"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => {
+                      setOtherCountry(false);
+                      update("country", "KSA");
+                    }}
+                  >
+                    List
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={form.country}
+                  onValueChange={(v) => {
+                    if (v === "__other__") {
+                      setOtherCountry(true);
+                      update("country", "");
+                    } else if (v) {
+                      update("country", v);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="KSA" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRY_OPTIONS.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="__other__">Other…</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>App Method *</Label>
