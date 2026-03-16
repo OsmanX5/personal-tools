@@ -31,7 +31,11 @@ interface TransactionDialogProps {
     accountId: string,
     data: { amount: number; type: TransactionType },
   ) => void;
-  onSubmitUpdateValue: (accountId: string, newAmount: number) => void;
+  onSubmitUpdateValue: (
+    accountId: string,
+    newAmount: number,
+    updateKind: "MarketChange" | "Transaction",
+  ) => void;
   loading?: boolean;
 }
 
@@ -47,6 +51,9 @@ export function TransactionDialog({
   const [amount, setAmount] = useState<number>(0);
   const [type, setType] = useState<TransactionType>("Income");
   const [newValue, setNewValue] = useState<number>(account?.amount ?? 0);
+  const [updateKind, setUpdateKind] = useState<"MarketChange" | "Transaction">(
+    "MarketChange",
+  );
 
   // Reset form when account changes
   const handleOpenChange = (isOpen: boolean) => {
@@ -54,6 +61,7 @@ export function TransactionDialog({
       setAmount(0);
       setType("Income");
       setNewValue(account.amount);
+      setUpdateKind("MarketChange");
     }
     onOpenChange(isOpen);
   };
@@ -65,7 +73,7 @@ export function TransactionDialog({
     if (mode === "transaction") {
       onSubmitTransaction(account._id, { amount, type });
     } else {
-      onSubmitUpdateValue(account._id, newValue);
+      onSubmitUpdateValue(account._id, newValue, updateKind);
     }
   };
 
@@ -158,6 +166,23 @@ export function TransactionDialog({
             </>
           ) : (
             <>
+              {/* Update Kind toggle */}
+              <div className="space-y-1.5">
+                <Label>Update Kind</Label>
+                <div className="flex rounded-md border text-sm">
+                  {(["MarketChange", "Transaction"] as const).map((k, i) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setUpdateKind(k)}
+                      className={`flex-1 px-3 py-1.5 transition-colors ${i > 0 ? "border-l" : ""} ${updateKind === k ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                    >
+                      {k === "MarketChange" ? "Market Change" : "Transaction"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* New Value */}
               <div className="space-y-1.5">
                 <Label htmlFor="new-value">New Account Value</Label>
@@ -192,8 +217,27 @@ export function TransactionDialog({
                     {diff >= 0 ? "+" : ""}
                     {diff.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}{" "}
-                    ({diff >= 0 ? "Income" : "Expense"})
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Transaction type
+                  </span>
+                  <span
+                    className={`font-medium ${
+                      updateKind === "MarketChange"
+                        ? "text-purple-600"
+                        : diff >= 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                    }`}
+                  >
+                    {updateKind === "MarketChange"
+                      ? "Market Change"
+                      : diff >= 0
+                        ? "Income"
+                        : "Expense"}
                   </span>
                 </div>
                 <div className="mt-1 flex justify-between border-t pt-1 font-medium">

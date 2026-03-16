@@ -20,7 +20,12 @@ export async function POST(
   // If "newAmount" is provided, calculate the transaction from the difference
   if (body.newAmount !== undefined) {
     const diff = body.newAmount - account.amount;
-    const type = diff >= 0 ? "Income" : "Expense";
+    const type =
+      body.updateKind === "MarketChange"
+        ? "MarketChange"
+        : diff >= 0
+          ? "Income"
+          : "Expense";
     account.transactions.push({ amount: diff, type } as any);
     account.amount = body.newAmount;
   } else {

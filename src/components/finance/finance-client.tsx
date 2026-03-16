@@ -50,7 +50,7 @@ export default function FinanceClient() {
     setSelectedAccount((prev) => (prev?._id === updated._id ? updated : prev));
   }, []);
 
-  const [displayCurrency, setDisplayCurrency] = useState<Currency>("USD");
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>("SAR");
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
     USD: 1,
     SAR: 3.75,
@@ -155,13 +155,17 @@ export default function FinanceClient() {
     }
   };
 
-  const handleUpdateValue = async (accountId: string, newAmount: number) => {
+  const handleUpdateValue = async (
+    accountId: string,
+    newAmount: number,
+    updateKind: "MarketChange" | "Transaction",
+  ) => {
     setSaving(true);
     try {
       const res = await fetch(`/api/finance/${accountId}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newAmount }),
+        body: JSON.stringify({ newAmount, updateKind }),
       });
       if (!res.ok) throw new Error("Failed to update value");
       const updated = await res.json();
@@ -327,7 +331,7 @@ export default function FinanceClient() {
           {/* Right panel: summary + detail */}
           <div className="flex min-h-0 flex-1 flex-col gap-4">
             {/* Net Worth Summary */}
-            <div className="h-56 shrink-0">
+            <div className="min-h-0 flex-1">
               <NetWorthSummary
                 accounts={accounts}
                 displayCurrency={displayCurrency}

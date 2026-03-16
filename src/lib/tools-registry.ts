@@ -4,6 +4,7 @@ import {
   Briefcase,
   Weight,
   Receipt,
+  CheckSquare,
 } from "lucide-react";
 
 export interface ToolConfig {
@@ -59,6 +60,14 @@ export const tools: ToolConfig[] = [
     slug: "weight",
     description: "Log weight, track BMI automatically, and set weight goals.",
     icon: Weight,
+    status: "active",
+  },
+  {
+    name: "Habits Tracker",
+    slug: "habits",
+    description:
+      "Build daily routines, track streaks, and log quantitative habits.",
+    icon: CheckSquare,
     status: "active",
   },
 ];

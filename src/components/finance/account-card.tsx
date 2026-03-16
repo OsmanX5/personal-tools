@@ -82,20 +82,38 @@ export function AccountListItem({
       onClick={() => onSelect(account)}
     >
       <CardContent className="flex items-center gap-3 px-3">
-        {/* Name */}
+        {/* Name + original value */}
         <div className="min-w-0 flex-1">
           <span className="truncate font-semibold text-sm">{account.name}</span>
+          {accountCurrency !== displayCurrency && (
+            <span className="ml-1.5 text-xs text-muted-foreground/80">
+              (
+              {account.amount.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}{" "}
+              {CURRENCY_SYMBOLS[accountCurrency]})
+            </span>
+          )}
         </div>
 
-        {/* Amount */}
-        <div className="shrink-0 text-right font-bold text-sm">
+        {/* Amount – click to update value */}
+        <button
+          type="button"
+          className="group shrink-0 flex items-center gap-1 rounded border border-border bg-muted/50 px-1.5 py-0.5 transition-colors hover:bg-muted cursor-pointer font-bold text-base leading-tight"
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdateValue(account);
+          }}
+          title="Click to update value"
+        >
           {displayAmt.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
-          })}
-          {"  "}
+          })}{" "}
           {symbol}
-        </div>
+          <RefreshCw className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+        </button>
 
         {/* Actions */}
         <div
@@ -110,15 +128,6 @@ export function AccountListItem({
             title="Add Transaction"
           >
             <Plus className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => onUpdateValue(account)}
-            title="Update Value"
-          >
-            <RefreshCw className="h-3 w-3" />
           </Button>
         </div>
       </CardContent>
