@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { KanbanBoard } from "@/components/jobs/kanban-board";
 import { JobFormDialog } from "@/components/jobs/job-form-dialog";
+import { QuickLinksBar } from "@/components/jobs/quick-links-bar";
 import type { JobCard, JobCardFormData, JobStatus } from "@/lib/jobs-types";
 
 const POSITION_FILTERS = [
@@ -146,6 +147,9 @@ export default function JobsClient() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+      {/* Quick Links */}
+      <QuickLinksBar />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
