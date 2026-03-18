@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Wallet, Pencil, Trash2 } from "lucide-react";
+import { Wallet, Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -30,16 +30,22 @@ interface TransactionDetailPanelProps {
   account: NetWorthAccount;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
   onEdit: (account: NetWorthAccount) => void;
   onDelete: (id: string) => void;
+  onAddTransaction: (account: NetWorthAccount) => void;
+  onUpdateValue: (account: NetWorthAccount) => void;
 }
 
 export function TransactionDetailPanel({
   account,
   displayCurrency,
   exchangeRates,
+  hideValues,
   onEdit,
   onDelete,
+  onAddTransaction,
+  onUpdateValue,
 }: TransactionDetailPanelProps) {
   const accountCurrency = account.currency ?? "USD";
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
@@ -125,6 +131,24 @@ export function TransactionDetailPanel({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
+              onClick={() => onAddTransaction(account)}
+              title="Add Transaction"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => onUpdateValue(account)}
+              title="Update Value"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
               onClick={() => onEdit(account)}
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -144,13 +168,14 @@ export function TransactionDetailPanel({
         )}
         <div className="flex items-baseline gap-2 pt-1">
           <span className="text-3xl font-bold">
-            {symbol}
-            {displayAmt.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {hideValues
+              ? "****"
+              : `${symbol}${displayAmt.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
           </span>
-          {accountCurrency !== displayCurrency && (
+          {accountCurrency !== displayCurrency && !hideValues && (
             <span className="text-sm text-muted-foreground">
               ({CURRENCY_SYMBOLS[accountCurrency]}
               {account.amount.toLocaleString(undefined, {
@@ -252,12 +277,15 @@ export function TransactionDetailPanel({
                     <span
                       className={`font-medium ${tx.amount >= 0 ? "text-green-600" : "text-red-600"}`}
                     >
-                      {tx.amount >= 0 ? "+" : ""}
-                      {CURRENCY_SYMBOLS[accountCurrency]}
-                      {tx.amount.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {hideValues
+                        ? "****"
+                        : `${tx.amount >= 0 ? "+" : ""}${CURRENCY_SYMBOLS[accountCurrency]}${tx.amount.toLocaleString(
+                            undefined,
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}`}
                     </span>
                   </div>
                 </div>

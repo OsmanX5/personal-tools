@@ -8,6 +8,7 @@ import { MonthlySummaryCards } from "@/components/budget/monthly-summary-cards";
 import { CategoryBreakdownChart } from "@/components/budget/category-breakdown-chart";
 import { ExpenseList } from "@/components/budget/expense-list";
 import { ExpenseFormDialog } from "@/components/budget/expense-form-dialog";
+import type { AccountOption } from "@/components/budget/expense-form-dialog";
 import { BudgetOverview } from "@/components/budget/budget-overview";
 import { BudgetFormDialog } from "@/components/budget/budget-form-dialog";
 import { PlansList } from "@/components/budget/plans-list";
@@ -63,29 +64,25 @@ export default function BudgetClient() {
   // Previous month expenses for comparison
   const [prevExpenses, setPrevExpenses] = useState<Expense[]>([]);
 
+  // NetWorth accounts for withdraw-from-account feature
+  const [accounts, setAccounts] = useState<AccountOption[]>([]);
+
   // ── Fetch ─────────────────────────────────────────────────────────
 
-  const fetchExpenses = useCallback(
-    async (m: number, y: number) => {
-      try {
-        const res = await fetch(
-          `/api/budget/expenses?month=${m}&year=${y}`,
-        );
-        if (!res.ok) throw new Error("Failed to fetch expenses");
-        return (await res.json()) as Expense[];
-      } catch {
-        toast.error("Failed to load expenses");
-        return [];
-      }
-    },
-    [],
-  );
+  const fetchExpenses = useCallback(async (m: number, y: number) => {
+    try {
+      const res = await fetch(`/api/budget/expenses?month=${m}&year=${y}`);
+      if (!res.ok) throw new Error("Failed to fetch expenses");
+      return (await res.json()) as Expense[];
+    } catch {
+      toast.error("Failed to load expenses");
+      return [];
+    }
+  }, []);
 
   const fetchBudgets = useCallback(async (m: number, y: number) => {
     try {
-      const res = await fetch(
-        `/api/budget/budgets?month=${m}&year=${y}`,
-      );
+      const res = await fetch(`/api/budget/budgets?month=${m}&year=${y}`);
       if (!res.ok) throw new Error("Failed to fetch budgets");
       return (await res.json()) as CategoryBudget[];
     } catch {
@@ -133,6 +130,25 @@ export default function BudgetClient() {
     const prev = await fetchExpenses(prevM, prevY);
     setPrevExpenses(prev);
 
+    // Fetch networth accounts for withdraw-from-account dropdown
+    try {
+      const res = await fetch("/api/networth");
+      if (res.ok) {
+        const all = await res.json();
+        setAccounts(
+          all
+            .filter((a: any) => a.status === "active")
+            .map((a: any) => ({
+              _id: a._id,
+              name: a.name,
+              currency: a.currency,
+            })),
+        );
+      }
+    } catch {
+      // non-critical — dropdown will just be empty
+    }
+
     setLoading(false);
   }, [month, year, fetchExpenses, fetchBudgets, fetchPlans]);
 
@@ -168,14 +184,11 @@ export default function BudgetClient() {
     setSaving(true);
     try {
       if (editingExpense) {
-        const res = await fetch(
-          `/api/budget/expenses/${editingExpense._id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          },
-        );
+        const res = await fetch(`/api/budget/expenses/${editingExpense._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
         if (!res.ok) throw new Error("Failed to update");
         const updated = await res.json();
         setExpenses((prev) =>
@@ -315,7 +328,8 @@ export default function BudgetClient() {
     () =>
       expenses.reduce(
         (sum, e) =>
-          sum + convertAmount(e.amount, e.currency, displayCurrency, exchangeRates),
+          sum +
+          convertAmount(e.amount, e.currency, displayCurrency, exchangeRates),
         0,
       ),
     [expenses, displayCurrency, exchangeRates],
@@ -325,7 +339,8 @@ export default function BudgetClient() {
     () =>
       prevExpenses.reduce(
         (sum, e) =>
-          sum + convertAmount(e.amount, e.currency, displayCurrency, exchangeRates),
+          sum +
+          convertAmount(e.amount, e.currency, displayCurrency, exchangeRates),
         0,
       ),
     [prevExpenses, displayCurrency, exchangeRates],
@@ -542,6 +557,7 @@ export default function BudgetClient() {
         onSubmit={handleExpenseSubmit}
         initialData={editingExpense}
         loading={saving}
+        accounts={accounts}
         key={editingExpense?._id ?? "new-expense"}
       />
 
@@ -555,7 +571,8 @@ export default function BudgetClient() {
         initialCategory={editingBudgetCategory}
         existingBudget={
           editingBudgetCategory
-            ? budgets.find((b) => b.category === editingBudgetCategory) ?? null
+            ? (budgets.find((b) => b.category === editingBudgetCategory) ??
+              null)
             : null
         }
         loading={saving}

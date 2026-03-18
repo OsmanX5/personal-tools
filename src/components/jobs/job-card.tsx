@@ -172,6 +172,22 @@ export function JobCardComponent({
                 Application Link
               </a>
             )}
+
+            {/* Resume Link */}
+            {job.resumeId && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>Resume: {job.resumeId}</span>
+                <a
+                  href={`https://www.dev-resume.com/cv-viewer/${job.resumeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
           </>
         )}
       </CardContent>

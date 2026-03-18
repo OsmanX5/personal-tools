@@ -41,6 +41,7 @@ interface AccountListItemProps {
   account: NetWorthAccount;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
   selected: boolean;
   onSelect: (account: NetWorthAccount) => void;
   onEdit: (account: NetWorthAccount) => void;
@@ -63,6 +64,7 @@ export function AccountListItem({
   account,
   displayCurrency,
   exchangeRates,
+  hideValues,
   selected,
   onSelect,
   onEdit,
@@ -88,7 +90,7 @@ export function AccountListItem({
         {/* Name + original value */}
         <div className="min-w-0 flex-1">
           <span className="truncate font-semibold text-sm">{account.name}</span>
-          {accountCurrency !== displayCurrency && (
+          {accountCurrency !== displayCurrency && !hideValues && (
             <span className="ml-1.5 text-xs text-muted-foreground/80">
               (
               {account.amount.toLocaleString(undefined, {
@@ -110,11 +112,12 @@ export function AccountListItem({
           }}
           title="Click to update value"
         >
-          {displayAmt.toLocaleString(undefined, {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-          })}{" "}
-          {symbol}
+          {hideValues
+            ? "****"
+            : `${displayAmt.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })} ${symbol}`}
           <RefreshCw className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
         </button>
 

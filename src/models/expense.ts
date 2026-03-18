@@ -8,6 +8,7 @@ export interface IExpense extends Document {
   date: Date;
   recurring: boolean;
   recurringFrequency?: string;
+  withdrawAccountId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +58,9 @@ const ExpenseSchema = new Schema<IExpense>(
     recurringFrequency: {
       type: String,
       enum: ["Weekly", "Monthly", "Every 6 Months", "Yearly"],
+    },
+    withdrawAccountId: {
+      type: String,
     },
   },
   { timestamps: true },

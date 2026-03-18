@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Calendar, Ruler, StickyNote } from "lucide-react";
+import { Pencil, Trash2, Calendar, StickyNote } from "lucide-react";
 import {
   type WeightEntry,
   getBmiCategory,
@@ -51,10 +51,6 @@ export function WeightEntryCard({
               className={`gap-1 ${BMI_CATEGORY_COLORS[bmiCategory]}`}
             >
               BMI {entry.bmi} · {bmiCategory}
-            </Badge>
-            <Badge variant="outline" className="gap-1 text-xs">
-              <Ruler className="h-3 w-3" />
-              {entry.height} cm
             </Badge>
             <Button
               variant="ghost"

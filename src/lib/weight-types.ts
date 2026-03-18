@@ -5,7 +5,6 @@ export type BmiCategory = "Underweight" | "Normal" | "Overweight" | "Obese";
 export interface WeightEntry {
   _id: string;
   weight: number; // kg
-  height: number; // cm
   bmi: number;
   date: string;
   note?: string;
@@ -17,6 +16,12 @@ export type WeightEntryFormData = Omit<
   WeightEntry,
   "_id" | "bmi" | "createdAt" | "updatedAt"
 >;
+
+export interface UserSettings {
+  _id?: string;
+  height: number | null; // cm
+  updatedAt?: string;
+}
 
 export interface WeightGoal {
   _id: string;

@@ -25,7 +25,7 @@ interface WeightEntryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSubmit: (data: WeightEntryFormData) => void;
   initialData?: WeightEntry | null;
-  lastHeight?: number;
+  userHeight?: number | null;
   loading?: boolean;
 }
 
@@ -34,18 +34,11 @@ export function WeightEntryFormDialog({
   onOpenChange,
   onSubmit,
   initialData,
-  lastHeight,
+  userHeight,
   loading,
 }: WeightEntryFormDialogProps) {
   const [weight, setWeight] = useState(
     initialData ? String(initialData.weight) : "",
-  );
-  const [height, setHeight] = useState(
-    initialData
-      ? String(initialData.height)
-      : lastHeight
-        ? String(lastHeight)
-        : "",
   );
   const [date, setDate] = useState(
     initialData
@@ -56,16 +49,15 @@ export function WeightEntryFormDialog({
 
   const previewBmi = useMemo(() => {
     const w = parseFloat(weight);
-    const h = parseFloat(height);
-    if (w > 0 && h > 0) return calculateBmi(w, h);
+    if (w > 0 && userHeight && userHeight > 0)
+      return calculateBmi(w, userHeight);
     return null;
-  }, [weight, height]);
+  }, [weight, userHeight]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       weight: parseFloat(weight),
-      height: parseFloat(height),
       date,
       note: note.trim() || undefined,
     });
@@ -80,33 +72,18 @@ export function WeightEntryFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="weight">Weight (kg) *</Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.1"
-                min="1"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder="70.5"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="height">Height (cm) *</Label>
-              <Input
-                id="height"
-                type="number"
-                step="0.1"
-                min="1"
-                value={height}
-                onChange={(e) => setHeight(e.target.value)}
-                placeholder="175"
-                required
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="weight">Weight (kg) *</Label>
+            <Input
+              id="weight"
+              type="number"
+              step="0.1"
+              min="1"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              placeholder="70.5"
+              required
+            />
           </div>
 
           {/* Live BMI preview */}

@@ -5,6 +5,7 @@ import {
   Weight,
   Receipt,
   CheckSquare,
+  GraduationCap,
 } from "lucide-react";
 
 export interface ToolConfig {
@@ -69,6 +70,14 @@ export const tools: ToolConfig[] = [
     description:
       "Build daily routines, track streaks, and log quantitative habits.",
     icon: CheckSquare,
+    status: "active",
+  },
+  {
+    name: "Courses Tracker",
+    slug: "courses",
+    description:
+      "Organize your learning — track courses, books, and tutorials with progress and skill tags.",
+    icon: GraduationCap,
     status: "active",
   },
 ];

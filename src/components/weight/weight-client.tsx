@@ -2,19 +2,22 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Target, Scale } from "lucide-react";
+import { Plus, Target, Scale, Ruler, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { WeightEntryCard } from "@/components/weight/weight-entry-card";
 import { WeightEntryFormDialog } from "@/components/weight/weight-entry-form-dialog";
 import { WeightGoalCard } from "@/components/weight/weight-goal-card";
 import { WeightGoalFormDialog } from "@/components/weight/weight-goal-form-dialog";
+import { WeightChart } from "@/components/weight/weight-chart";
 import {
   type WeightEntry,
   type WeightEntryFormData,
   type WeightGoal,
   type WeightGoalFormData,
+  type UserSettings,
   getBmiCategory,
   BMI_CATEGORY_COLORS,
 } from "@/lib/weight-types";
@@ -22,6 +25,7 @@ import {
 export default function WeightClient() {
   const [entries, setEntries] = useState<WeightEntry[]>([]);
   const [goals, setGoals] = useState<WeightGoal[]>([]);
+  const [userHeight, setUserHeight] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -33,20 +37,31 @@ export default function WeightClient() {
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<WeightGoal | null>(null);
 
+  // Height editing state
+  const [editingHeight, setEditingHeight] = useState(false);
+  const [heightInput, setHeightInput] = useState("");
+
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      const [entriesRes, goalsRes] = await Promise.all([
+      const [entriesRes, goalsRes, settingsRes] = await Promise.all([
         fetch("/api/weight"),
         fetch("/api/weight/goals"),
+        fetch("/api/settings"),
       ]);
       if (!entriesRes.ok || !goalsRes.ok) throw new Error("Failed to fetch");
-      const [entriesData, goalsData] = await Promise.all([
+      const [entriesData, goalsData, settingsData]: [
+        WeightEntry[],
+        WeightGoal[],
+        UserSettings,
+      ] = await Promise.all([
         entriesRes.json(),
         goalsRes.json(),
+        settingsRes.ok ? settingsRes.json() : { height: null },
       ]);
       setEntries(entriesData);
       setGoals(goalsData);
+      setUserHeight(settingsData.height);
     } catch {
       toast.error("Failed to load weight data");
     } finally {
@@ -194,6 +209,27 @@ export default function WeightClient() {
     }
   };
 
+  const handleHeightSave = async () => {
+    const h = parseFloat(heightInput);
+    if (!h || h <= 0) return;
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ height: h }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      setUserHeight(h);
+      setEditingHeight(false);
+      toast.success("Height updated");
+      // Refetch entries since BMI was recalculated server-side
+      const entriesRes = await fetch("/api/weight");
+      if (entriesRes.ok) setEntries(await entriesRes.json());
+    } catch {
+      toast.error("Failed to update height");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -240,7 +276,7 @@ export default function WeightClient() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Current Weight */}
         <Card>
           <CardContent className="flex items-center gap-3 px-4 py-4">
@@ -251,6 +287,62 @@ export default function WeightClient() {
                 <p className="text-2xl font-bold">{latestEntry.weight} kg</p>
               ) : (
                 <p className="text-lg text-muted-foreground">No entries yet</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Height */}
+        <Card>
+          <CardContent className="flex items-center gap-3 px-4 py-4">
+            <Ruler className="h-8 w-8 text-muted-foreground" />
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Height</p>
+              {editingHeight ? (
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={heightInput}
+                    onChange={(e) => setHeightInput(e.target.value)}
+                    className="h-8 w-24"
+                    placeholder="175"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleHeightSave();
+                      if (e.key === "Escape") setEditingHeight(false);
+                    }}
+                  />
+                  <span className="text-sm text-muted-foreground">cm</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2"
+                    onClick={handleHeightSave}
+                  >
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  {userHeight ? (
+                    <p className="text-2xl font-bold">{userHeight} cm</p>
+                  ) : (
+                    <p className="text-lg text-muted-foreground">Not set</p>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setHeightInput(userHeight ? String(userHeight) : "");
+                      setEditingHeight(true);
+                    }}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
@@ -298,6 +390,9 @@ export default function WeightClient() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Weight Trend Chart */}
+      <WeightChart entries={entries} goalWeight={activeGoal?.targetWeight} />
 
       {/* Goals Section */}
       {goals.length > 0 && (
@@ -357,7 +452,7 @@ export default function WeightClient() {
         }}
         onSubmit={handleEntrySubmit}
         initialData={editingEntry}
-        lastHeight={latestEntry?.height}
+        userHeight={userHeight}
         loading={saving}
         key={editingEntry?._id ?? "new-entry"}
       />

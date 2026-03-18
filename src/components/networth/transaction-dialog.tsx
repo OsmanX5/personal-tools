@@ -51,6 +51,7 @@ export function TransactionDialog({
   const [amount, setAmount] = useState<number>(0);
   const [type, setType] = useState<TransactionType>("Income");
   const [newValue, setNewValue] = useState<number>(account?.amount ?? 0);
+  const [txDelta, setTxDelta] = useState<number>(0);
   const [updateKind, setUpdateKind] = useState<"MarketChange" | "Transaction">(
     "MarketChange",
   );
@@ -61,6 +62,7 @@ export function TransactionDialog({
       setAmount(0);
       setType("Income");
       setNewValue(account.amount);
+      setTxDelta(0);
       setUpdateKind("MarketChange");
     }
     onOpenChange(isOpen);
@@ -72,14 +74,18 @@ export function TransactionDialog({
 
     if (mode === "transaction") {
       onSubmitTransaction(account._id, { amount, type });
-    } else {
+    } else if (updateKind === "MarketChange") {
       onSubmitUpdateValue(account._id, newValue, updateKind);
+    } else {
+      // Transaction kind: send delta as a direct transaction
+      const txType: TransactionType = txDelta >= 0 ? "Income" : "Expense";
+      onSubmitTransaction(account._id, { amount: txDelta, type: txType });
     }
   };
 
   if (!account) return null;
 
-  const diff = newValue - account.amount;
+  const marketDiff = newValue - account.amount;
   const symbol = CURRENCY_SYMBOLS[account.currency ?? "USD"];
 
   return (
@@ -183,73 +189,133 @@ export function TransactionDialog({
                 </div>
               </div>
 
-              {/* New Value */}
-              <div className="space-y-1.5">
-                <Label htmlFor="new-value">New Account Value</Label>
-                <Input
-                  id="new-value"
-                  type="number"
-                  step="0.01"
-                  value={newValue}
-                  onChange={(e) => setNewValue(Number(e.target.value))}
-                  required
-                />
-              </div>
+              {updateKind === "MarketChange" ? (
+                <>
+                  {/* New Value */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="new-value">New Account Value</Label>
+                    <Input
+                      id="new-value"
+                      type="number"
+                      step="0.01"
+                      value={newValue}
+                      onChange={(e) => setNewValue(Number(e.target.value))}
+                      required
+                    />
+                  </div>
 
-              {/* Preview */}
-              <div className="rounded-md border p-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current balance</span>
-                  <span>
-                    {symbol}
-                    {account.amount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Calculated transaction
-                  </span>
-                  <span
-                    className={diff >= 0 ? "text-green-600" : "text-red-600"}
-                  >
-                    {diff >= 0 ? "+" : ""}
-                    {diff.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Transaction type
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      updateKind === "MarketChange"
-                        ? "text-purple-600"
-                        : diff >= 0
-                          ? "text-green-600"
-                          : "text-red-600"
-                    }`}
-                  >
-                    {updateKind === "MarketChange"
-                      ? "Market Change"
-                      : diff >= 0
-                        ? "Income"
-                        : "Expense"}
-                  </span>
-                </div>
-                <div className="mt-1 flex justify-between border-t pt-1 font-medium">
-                  <span>New balance</span>
-                  <span>
-                    {symbol}
-                    {newValue.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              </div>
+                  {/* Preview */}
+                  <div className="rounded-md border p-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Current balance
+                      </span>
+                      <span>
+                        {symbol}
+                        {account.amount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Calculated transaction
+                      </span>
+                      <span
+                        className={
+                          marketDiff >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        {marketDiff >= 0 ? "+" : ""}
+                        {marketDiff.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Transaction type
+                      </span>
+                      <span className="font-medium text-purple-600">
+                        Market Change
+                      </span>
+                    </div>
+                    <div className="mt-1 flex justify-between border-t pt-1 font-medium">
+                      <span>New balance</span>
+                      <span>
+                        {symbol}
+                        {newValue.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Transaction Delta */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tx-delta">
+                      Transaction Amount (positive = add, negative = subtract)
+                    </Label>
+                    <Input
+                      id="tx-delta"
+                      type="number"
+                      step="0.01"
+                      value={txDelta}
+                      onChange={(e) => setTxDelta(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+
+                  {/* Preview */}
+                  <div className="rounded-md border p-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Current balance
+                      </span>
+                      <span>
+                        {symbol}
+                        {account.amount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Transaction</span>
+                      <span
+                        className={
+                          txDelta >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        {txDelta >= 0 ? "+" : ""}
+                        {txDelta.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Transaction type
+                      </span>
+                      <span
+                        className={`font-medium ${txDelta >= 0 ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {txDelta >= 0 ? "Income" : "Expense"}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex justify-between border-t pt-1 font-medium">
+                      <span>New balance</span>
+                      <span>
+                        {symbol}
+                        {(account.amount + txDelta).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </>
           )}
 

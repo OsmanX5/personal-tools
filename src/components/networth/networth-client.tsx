@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Eye, EyeOff } from "lucide-react";
 import { AccountListItem } from "@/components/networth/account-card";
 import { AccountFormDialog } from "@/components/networth/account-form-dialog";
 import { TransactionDialog } from "@/components/networth/transaction-dialog";
@@ -211,6 +211,8 @@ export default function NetWorthClient() {
     "All",
   );
 
+  const [hideValues, setHideValues] = useState(true);
+
   const filteredAccounts = useMemo(
     () =>
       purposeFilter === "All"
@@ -235,14 +237,30 @@ export default function NetWorthClient() {
           <p className="text-sm text-muted-foreground">
             {accounts.length} account{accounts.length !== 1 ? "s" : ""} — Total:{" "}
             <span className="font-semibold text-foreground">
-              {CURRENCY_SYMBOLS[displayCurrency]}
-              {total.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {hideValues
+                ? "****"
+                : `${CURRENCY_SYMBOLS[displayCurrency]}${total.toLocaleString(
+                    undefined,
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}`}
             </span>
           </p>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setHideValues((v) => !v)}
+          title={hideValues ? "Show values" : "Hide values"}
+        >
+          {hideValues ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </Button>
       </div>
 
       {accounts.length === 0 ? (
@@ -300,6 +318,7 @@ export default function NetWorthClient() {
                 account={account}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
+                hideValues={hideValues}
                 selected={selectedAccount?._id === account._id}
                 onSelect={setSelectedAccount}
                 onEdit={(a) => {
@@ -339,6 +358,7 @@ export default function NetWorthClient() {
                 accounts={accounts}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
+                hideValues={hideValues}
               />
             </div>
 
@@ -349,11 +369,22 @@ export default function NetWorthClient() {
                   account={selectedAccount}
                   displayCurrency={displayCurrency}
                   exchangeRates={exchangeRates}
+                  hideValues={hideValues}
                   onEdit={(a) => {
                     setEditingAccount(a);
                     setAccountDialogOpen(true);
                   }}
                   onDelete={handleDelete}
+                  onAddTransaction={(a) => {
+                    setTxAccount(a);
+                    setTxMode("transaction");
+                    setTxDialogOpen(true);
+                  }}
+                  onUpdateValue={(a) => {
+                    setTxAccount(a);
+                    setTxMode("update-value");
+                    setTxDialogOpen(true);
+                  }}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center rounded-lg border border-dashed">

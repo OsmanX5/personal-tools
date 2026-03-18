@@ -18,13 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Expense, ExpenseFormData } from "@/lib/budget-types";
-import {
-  EXPENSE_CATEGORIES,
-  RECURRING_FREQUENCIES,
-} from "@/lib/budget-types";
+import { EXPENSE_CATEGORIES, RECURRING_FREQUENCIES } from "@/lib/budget-types";
 import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
 import type { Currency } from "@/lib/networth-types";
 import type { ExpenseCategory, RecurringFrequency } from "@/lib/budget-types";
+
+export interface AccountOption {
+  _id: string;
+  name: string;
+  currency: Currency;
+}
 
 interface ExpenseFormDialogProps {
   open: boolean;
@@ -32,6 +35,7 @@ interface ExpenseFormDialogProps {
   onSubmit: (data: ExpenseFormData) => void;
   initialData?: Expense | null;
   loading?: boolean;
+  accounts?: AccountOption[];
 }
 
 const today = () => new Date().toISOString().split("T")[0];
@@ -51,6 +55,7 @@ export function ExpenseFormDialog({
   onSubmit,
   initialData,
   loading,
+  accounts = [],
 }: ExpenseFormDialogProps) {
   const [form, setForm] = useState<ExpenseFormData>(
     initialData
@@ -62,6 +67,7 @@ export function ExpenseFormDialog({
           date: initialData.date.split("T")[0],
           recurring: initialData.recurring,
           recurringFrequency: initialData.recurringFrequency,
+          withdrawAccountId: initialData.withdrawAccountId,
         }
       : defaultForm,
   );
@@ -211,6 +217,39 @@ export function ExpenseFormDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Withdraw from account (optional) */}
+          {accounts.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Withdraw from account</Label>
+              <Select
+                value={form.withdrawAccountId ?? "none"}
+                onValueChange={(v) => {
+                  const accountId: string | undefined =
+                    !v || v === "none" ? undefined : v;
+                  setForm((prev) => ({
+                    ...prev,
+                    withdrawAccountId: accountId,
+                  }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {accounts.map((a) => (
+                    <SelectItem key={a._id} value={a._id}>
+                      {a.name} ({CURRENCY_SYMBOLS[a.currency]} {a.currency})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Automatically subtract this expense from the selected account
+              </p>
             </div>
           )}
 

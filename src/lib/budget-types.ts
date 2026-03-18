@@ -99,6 +99,7 @@ export interface Expense {
   date: string;
   recurring: boolean;
   recurringFrequency?: RecurringFrequency;
+  withdrawAccountId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -129,11 +130,7 @@ export type PlanPriority = "High" | "Medium" | "Low";
 export type PlanStatus = "Active" | "Completed" | "Cancelled";
 
 export const PLAN_PRIORITIES: PlanPriority[] = ["High", "Medium", "Low"];
-export const PLAN_STATUSES: PlanStatus[] = [
-  "Active",
-  "Completed",
-  "Cancelled",
-];
+export const PLAN_STATUSES: PlanStatus[] = ["Active", "Completed", "Cancelled"];
 
 export const PRIORITY_COLORS: Record<PlanPriority, string> = {
   High: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import WeightEntry from "@/models/weight_entry";
+import UserSettings from "@/models/user_settings";
 
 export async function PUT(
   request: NextRequest,
@@ -9,6 +10,15 @@ export async function PUT(
   await dbConnect();
   const { id } = await params;
   const body = await request.json();
+
+  if (body.weight) {
+    const settings = await UserSettings.findOne();
+    if (settings?.height) {
+      const heightM = settings.height / 100;
+      body.bmi = Math.round((body.weight / (heightM * heightM)) * 100) / 100;
+    }
+  }
+
   const entry = await WeightEntry.findByIdAndUpdate(id, body, {
     new: true,
     runValidators: true,

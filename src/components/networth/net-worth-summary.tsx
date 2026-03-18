@@ -37,6 +37,7 @@ interface NetWorthSummaryProps {
   accounts: NetWorthAccount[];
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
 }
 
 function convertAmount(
@@ -54,6 +55,7 @@ export function NetWorthSummary({
   accounts,
   displayCurrency,
   exchangeRates,
+  hideValues,
 }: NetWorthSummaryProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
 
@@ -306,11 +308,12 @@ export function NetWorthSummary({
               Net Worth
             </CardTitle>
             <p className="text-2xl font-bold">
-              {symbol}
-              {total.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
+              {hideValues
+                ? "****"
+                : `${symbol}${total.toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}`}
             </p>
           </div>
         </CardHeader>
@@ -334,7 +337,7 @@ export function NetWorthSummary({
                           width: `${pct}%`,
                           backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
                         }}
-                        title={`${d.name}: ${symbol}${d.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct.toFixed(1)}%)`}
+                        title={`${d.name}: ${hideValues ? "****" : `${symbol}${d.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} (${pct.toFixed(1)}%)`}
                       />
                     );
                   })}
@@ -351,11 +354,12 @@ export function NetWorthSummary({
                       />
                       <span className="text-muted-foreground">{d.name}</span>
                       <span className="font-medium">
-                        {symbol}
-                        {d.value.toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 0,
-                        })}
+                        {hideValues
+                          ? "****"
+                          : `${symbol}${d.value.toLocaleString(undefined, {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })}`}
                       </span>
                     </div>
                   ))}
