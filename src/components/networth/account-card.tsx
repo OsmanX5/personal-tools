@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,10 @@ import type {
   ExchangeRates,
 } from "@/lib/networth-types";
 import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import {
+  NETWORTH_MOTION_FAST_DURATION,
+  NETWORTH_MOTION_SPRING,
+} from "@/components/networth/networth-motion";
 
 const PURPOSE_COLOR_MAP: Record<string, string> = {
   Savings: "border-l-green-500",
@@ -79,64 +84,86 @@ export function AccountListItem({
     displayCurrency,
     exchangeRates,
   );
+  const shouldReduceMotion = useReducedMotion();
 
   return (
-    <Card
-      className={`cursor-pointer border-l-4 transition-all hover:shadow-md ${PURPOSE_COLOR_MAP[account.purpose] ?? "border-l-gray-500"} ${selected ? (PURPOSE_SELECTED_MAP[account.purpose] ?? "bg-gray-100 dark:bg-gray-950/60") : ""}`}
-      onClick={() => onSelect(account)}
-      onDoubleClick={() => onEdit(account)}
+    <motion.div
+      layout={!shouldReduceMotion}
+      animate={selected ? { y: -2, scale: 1.01 } : { y: 0, scale: 1 }}
+      whileHover={shouldReduceMotion ? undefined : { y: -3, scale: 1.01 }}
+      whileTap={shouldReduceMotion ? undefined : { scale: 0.995 }}
+      transition={
+        shouldReduceMotion
+          ? { duration: 0 }
+          : {
+              ...NETWORTH_MOTION_SPRING,
+              duration: NETWORTH_MOTION_FAST_DURATION,
+            }
+      }
     >
-      <CardContent className="flex items-center gap-3 px-3">
-        {/* Name + original value */}
-        <div className="min-w-0 flex-1">
-          <span className="truncate font-semibold text-sm">{account.name}</span>
-          {accountCurrency !== displayCurrency && !hideValues && (
-            <span className="ml-1.5 text-xs text-muted-foreground/80">
-              (
-              {account.amount.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}{" "}
-              {CURRENCY_SYMBOLS[accountCurrency]})
+      <Card
+        className={`cursor-pointer border-l-4 transition-all hover:shadow-md ${PURPOSE_COLOR_MAP[account.purpose] ?? "border-l-gray-500"} ${selected ? (PURPOSE_SELECTED_MAP[account.purpose] ?? "bg-gray-100 dark:bg-gray-950/60") : ""}`}
+        onClick={() => onSelect(account)}
+        onDoubleClick={() => onEdit(account)}
+      >
+        <CardContent className="flex items-center gap-3 px-3">
+          <div className="min-w-0 flex-1">
+            <span className="truncate text-sm font-semibold">
+              {account.name}
             </span>
-          )}
-        </div>
+            {accountCurrency !== displayCurrency && !hideValues && (
+              <span className="ml-1.5 text-xs text-muted-foreground/80">
+                (
+                {account.amount.toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}{" "}
+                {CURRENCY_SYMBOLS[accountCurrency]})
+              </span>
+            )}
+          </div>
 
-        {/* Amount – click to update value */}
-        <button
-          type="button"
-          className="group shrink-0 flex items-center gap-1 rounded border border-border bg-muted/50 px-1.5 py-0.5 transition-colors hover:bg-muted cursor-pointer font-bold text-base leading-tight"
-          onClick={(e) => {
-            e.stopPropagation();
-            onUpdateValue(account);
-          }}
-          title="Click to update value"
-        >
-          {hideValues
-            ? "****"
-            : `${displayAmt.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })} ${symbol}`}
-          <RefreshCw className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-        </button>
-
-        {/* Actions */}
-        <div
-          className="flex shrink-0 gap-0.5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => onAddTransaction(account)}
-            title="Add Transaction"
+          <motion.button
+            type="button"
+            className="group shrink-0 flex cursor-pointer items-center gap-1 rounded border border-border bg-muted/50 px-1.5 py-0.5 text-base font-bold leading-tight transition-colors hover:bg-muted"
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateValue(account);
+            }}
+            title="Click to update value"
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.03 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0 }
+                : { duration: NETWORTH_MOTION_FAST_DURATION }
+            }
           >
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            {hideValues
+              ? "****"
+              : `${displayAmt.toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })} ${symbol}`}
+            <RefreshCw className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-50" />
+          </motion.button>
+
+          <div
+            className="flex shrink-0 gap-0.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => onAddTransaction(account)}
+              title="Add Transaction"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

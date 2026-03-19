@@ -2,7 +2,14 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface ICourse extends Document {
   title: string;
-  platform: "Udemy" | "Coursera" | "YouTube" | "Book" | "Other";
+  platform:
+    | "Udemy"
+    | "Coursera"
+    | "YouTube"
+    | "Book"
+    | "DataCamp"
+    | "Udacity"
+    | "Other";
   type: "Course" | "Book" | "Tutorial";
   url: string;
   status: "Wishlist" | "In Progress" | "Paused" | "Completed" | "Dropped";
@@ -25,7 +32,15 @@ const CourseSchema = new Schema<ICourse>(
     },
     platform: {
       type: String,
-      enum: ["Udemy", "Coursera", "YouTube", "Book", "Other"],
+      enum: [
+        "Udemy",
+        "Coursera",
+        "YouTube",
+        "Book",
+        "DataCamp",
+        "Udacity",
+        "Other",
+      ],
       required: [true, "Platform is required"],
     },
     type: {

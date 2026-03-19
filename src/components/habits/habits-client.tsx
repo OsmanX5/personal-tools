@@ -173,14 +173,8 @@ export default function HabitsClient() {
 
   /** Called when user clicks "Mark done" or "Log value…" */
   const handleCheckOff = (habit: HabitWithStats) => {
-    if (habit.hasValue) {
-      // Open dialog for value entry
-      setLoggingHabit(habit);
-      setLogDialogOpen(true);
-    } else {
-      // Instant boolean check-off
-      submitLog({ habitId: habit._id, date: today });
-    }
+    setLoggingHabit(habit);
+    setLogDialogOpen(true);
   };
 
   const submitLog = async (data: {
@@ -296,7 +290,7 @@ export default function HabitsClient() {
         key={editingHabit?._id ?? "new-habit"}
       />
 
-      {/* Log dialog (for quantitative habits) */}
+      {/* Log dialog */}
       {loggingHabit && (
         <HabitLogDialog
           open={logDialogOpen}

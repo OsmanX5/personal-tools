@@ -453,6 +453,7 @@ export default function WeightClient() {
         onSubmit={handleEntrySubmit}
         initialData={editingEntry}
         userHeight={userHeight}
+        lastWeight={latestEntry?.weight}
         loading={saving}
         key={editingEntry?._id ?? "new-entry"}
       />

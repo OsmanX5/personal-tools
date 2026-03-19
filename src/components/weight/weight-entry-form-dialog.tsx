@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +27,7 @@ interface WeightEntryFormDialogProps {
   onSubmit: (data: WeightEntryFormData) => void;
   initialData?: WeightEntry | null;
   userHeight?: number | null;
+  lastWeight?: number | null;
   loading?: boolean;
 }
 
@@ -35,11 +37,13 @@ export function WeightEntryFormDialog({
   onSubmit,
   initialData,
   userHeight,
+  lastWeight,
   loading,
 }: WeightEntryFormDialogProps) {
-  const [weight, setWeight] = useState(
-    initialData ? String(initialData.weight) : "",
-  );
+  const initWeight = initialData?.weight ?? lastWeight ?? 70;
+  const [kg, setKg] = useState(Math.floor(initWeight));
+  const [grams, setGrams] = useState(Math.round((initWeight % 1) * 10));
+  const weight = String(kg + grams / 10);
   const [date, setDate] = useState(
     initialData
       ? new Date(initialData.date).toISOString().split("T")[0]
@@ -72,18 +76,44 @@ export function WeightEntryFormDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="weight">Weight (kg) *</Label>
-            <Input
-              id="weight"
-              type="number"
-              step="0.1"
-              min="1"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              placeholder="70.5"
-              required
-            />
+          <div className="space-y-3">
+            <Label>Weight (kg) *</Label>
+            <div className="text-center text-2xl font-bold tabular-nums">
+              {kg}.{grams}{" "}
+              <span className="text-sm font-normal text-muted-foreground">
+                kg
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Kilograms</span>
+                <span className="font-medium tabular-nums">{kg} kg</span>
+              </div>
+              <Slider
+                value={[kg]}
+                onValueChange={(val) =>
+                  setKg(Array.isArray(val) ? val[0] : val)
+                }
+                min={30}
+                max={200}
+                step={1}
+              />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Grams</span>
+                <span className="font-medium tabular-nums">.{grams}</span>
+              </div>
+              <Slider
+                value={[grams]}
+                onValueChange={(val) =>
+                  setGrams(Array.isArray(val) ? val[0] : val)
+                }
+                min={0}
+                max={9}
+                step={1}
+              />
+            </div>
           </div>
 
           {/* Live BMI preview */}

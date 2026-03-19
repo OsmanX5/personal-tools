@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -10,6 +11,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import type {
   NetWorthAccount,
@@ -17,6 +21,11 @@ import type {
   ExchangeRates,
 } from "@/lib/networth-types";
 import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
+import {
+  getNetWorthEnterTransition,
+  NETWORTH_MOTION_FAST_DURATION,
+  NETWORTH_MOTION_STAGGER,
+} from "@/components/networth/networth-motion";
 
 type BreakdownGroup = "account" | "currency" | "liquidity" | "purpose";
 
@@ -57,10 +66,11 @@ export function NetWorthSummary({
   exchangeRates,
   hideValues,
 }: NetWorthSummaryProps) {
+  const shouldReduceMotion = useReducedMotion();
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
 
   const [view, setView] = useState<"breakdown" | "trend">("breakdown");
-  const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("12m");
+  const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("30d");
   const [breakdownGroup, setBreakdownGroup] =
     useState<BreakdownGroup>("account");
 
@@ -232,9 +242,16 @@ export function NetWorthSummary({
   }, [accounts, displayCurrency, exchangeRates]);
 
   return (
-    <div className="flex flex-col h-full min-h-0 gap-2">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       {/* Selector row — above the card */}
-      <div className="flex shrink-0 items-center justify-between">
+      <motion.div
+        className="flex shrink-0 items-center justify-between"
+        initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={
+          shouldReduceMotion ? { duration: 0 } : getNetWorthEnterTransition()
+        }
+      >
         <div className="flex rounded-md border text-xs">
           {(["breakdown", "trend"] as const).map((v, i) => (
             <button
@@ -300,126 +317,231 @@ export function NetWorthSummary({
             ))}
           </div>
         )}
-      </div>
-      <Card className="flex flex-col flex-1 min-h-0">
-        <CardHeader className="shrink-0 pb-2 pt-3 px-4">
-          <div>
-            <CardTitle className="text-sm font-semibold text-muted-foreground">
-              Net Worth
-            </CardTitle>
-            <p className="text-2xl font-bold">
-              {hideValues
-                ? "****"
-                : `${symbol}${total.toLocaleString(undefined, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}`}
-            </p>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 px-4 pb-3">
-          {view === "breakdown" ? (
-            pieData.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                No data
-              </div>
-            ) : (
-              <div className="flex flex-col justify-center gap-3 h-full">
-                {/* Stacked horizontal bar */}
-                <div className="flex h-6 w-full overflow-hidden rounded-full">
-                  {pieData.map((d, i) => {
-                    const pct = total > 0 ? (d.value / total) * 100 : 0;
-                    return (
-                      <div
-                        key={d.name}
-                        className="relative group h-full transition-opacity hover:opacity-80"
-                        style={{
-                          width: `${pct}%`,
-                          backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
-                        }}
-                        title={`${d.name}: ${hideValues ? "****" : `${symbol}${d.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} (${pct.toFixed(1)}%)`}
-                      />
-                    );
-                  })}
-                </div>
-                {/* Legend */}
-                <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-xs">
-                  {pieData.map((d, i) => (
-                    <div key={d.name} className="flex items-center gap-1.5">
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
-                        }}
-                      />
-                      <span className="text-muted-foreground">{d.name}</span>
-                      <span className="font-medium">
-                        {hideValues
-                          ? "****"
-                          : `${symbol}${d.value.toLocaleString(undefined, {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="flex flex-col gap-2 h-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={trendPeriod === "12m" ? historyData12m : historyData30d}
-                  margin={{ top: 4, right: 12, bottom: 0, left: 4 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="netWorthGrad"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                  />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 10 }}
-                    className="fill-muted-foreground"
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10 }}
-                    className="fill-muted-foreground"
-                    tickFormatter={(v) =>
-                      v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
-                    }
-                  />
-                  <Tooltip
-                    formatter={(value) => [
-                      `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                      "Net Worth",
-                    ]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    fill="url(#netWorthGrad)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+      </motion.div>
+      <motion.div
+        className="flex min-h-0 flex-1"
+        initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : getNetWorthEnterTransition(0.04)
+        }
+      >
+        <Card className="flex min-h-0 flex-1 flex-row">
+          <CardHeader className="shrink-0 pb-2 pt-3 px-4">
+            <div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">
+                Net Worth
+              </CardTitle>
+              <motion.p
+                className="text-2xl font-bold"
+                key={`${view}-${trendPeriod}-${breakdownGroup}-${displayCurrency}-${Math.round(total)}`}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
+                }
+              >
+                {hideValues
+                  ? "****"
+                  : `${symbol}${total.toLocaleString(undefined, {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
+                    })}`}
+              </motion.p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="flex-1 min-h-0 px-4 pb-3">
+            <AnimatePresence mode="wait" initial={false}>
+              {view === "breakdown" ? (
+                <motion.div
+                  key={`breakdown-${breakdownGroup}`}
+                  className="flex h-full flex-col"
+                  initial={
+                    shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
+                  }
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={
+                    shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }
+                  }
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : getNetWorthEnterTransition(0.02)
+                  }
+                >
+                  {pieData.length === 0 ? (
+                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      No data
+                    </div>
+                  ) : (
+                    <div className="flex h-full flex-col gap-4 md:flex-row md:gap-4 justify-center items-center">
+                      {/* Pie Chart */}
+                      <div className="h-full w-full md:w-2/3 min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={pieData}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius="85%"
+                              paddingAngle={2}
+                            >
+                              {pieData.map((entry, i) => (
+                                <Cell
+                                  key={`cell-${entry.name}`}
+                                  fill={PIE_COLORS[i % PIE_COLORS.length]}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value) => {
+                                if (hideValues) return "****";
+                                return `${symbol}${Number(value).toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  },
+                                )}`;
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      {/* Legend */}
+                      <div className="flex w-full md:w-1/3 flex-col gap-2 overflow-y-auto text-xs">
+                        {pieData.map((d, i) => (
+                          <motion.div
+                            key={d.name}
+                            className="flex items-center gap-2"
+                            initial={
+                              shouldReduceMotion
+                                ? undefined
+                                : { opacity: 0, x: -8 }
+                            }
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={
+                              shouldReduceMotion
+                                ? { duration: 0 }
+                                : getNetWorthEnterTransition(
+                                    i * NETWORTH_MOTION_STAGGER,
+                                  )
+                            }
+                          >
+                            <span
+                              className="h-3 w-3 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  PIE_COLORS[i % PIE_COLORS.length],
+                              }}
+                            />
+                            <span className="flex-1 truncate text-muted-foreground">
+                              {d.name}
+                            </span>
+                            <span className="font-medium shrink-0">
+                              {hideValues
+                                ? "****"
+                                : `${symbol}${d.value.toLocaleString(
+                                    undefined,
+                                    {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 0,
+                                    },
+                                  )}`}
+                            </span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`trend-${trendPeriod}`}
+                  className="flex h-full flex-col gap-2"
+                  initial={
+                    shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
+                  }
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={
+                    shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -8 }
+                  }
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : getNetWorthEnterTransition(0.02)
+                  }
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={
+                        trendPeriod === "12m" ? historyData12m : historyData30d
+                      }
+                      margin={{ top: 4, right: 12, bottom: 0, left: 4 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="netWorthGrad"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        className="stroke-muted"
+                      />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 10 }}
+                        className="fill-muted-foreground"
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10 }}
+                        className="fill-muted-foreground"
+                        tickFormatter={(v) =>
+                          v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
+                        }
+                      />
+                      <Tooltip
+                        formatter={(value) => [
+                          `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                          "Net Worth",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        fill="url(#netWorthGrad)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

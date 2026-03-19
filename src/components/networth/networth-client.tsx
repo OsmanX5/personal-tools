@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,14 @@ import {
   CURRENCY_SYMBOLS,
   ACCOUNT_PURPOSES,
 } from "@/lib/networth-types";
+import {
+  getNetWorthEnterTransition,
+  NETWORTH_MOTION_FAST_DURATION,
+  NETWORTH_MOTION_STAGGER,
+} from "@/components/networth/networth-motion";
 
 export default function NetWorthClient() {
+  const shouldReduceMotion = useReducedMotion();
   const [accounts, setAccounts] = useState<NetWorthAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -211,7 +218,7 @@ export default function NetWorthClient() {
     "All",
   );
 
-  const [hideValues, setHideValues] = useState(true);
+  const [hideValues, setHideValues] = useState(false);
 
   const filteredAccounts = useMemo(
     () =>
@@ -223,178 +230,350 @@ export default function NetWorthClient() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <motion.div
+        className="flex flex-1 items-center justify-center"
+        initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={
+          shouldReduceMotion ? { duration: 0 } : getNetWorthEnterTransition()
+        }
+      >
         <p className="text-muted-foreground">Loading accounts…</p>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">NetWorth</h1>
-          <p className="text-sm text-muted-foreground">
-            {accounts.length} account{accounts.length !== 1 ? "s" : ""} — Total:{" "}
-            <span className="font-semibold text-foreground">
-              {hideValues
-                ? "****"
-                : `${CURRENCY_SYMBOLS[displayCurrency]}${total.toLocaleString(
-                    undefined,
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}`}
-            </span>
-          </p>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setHideValues((v) => !v)}
-          title={hideValues ? "Show values" : "Hide values"}
-        >
-          {hideValues ? (
-            <EyeOff className="h-5 w-5" />
-          ) : (
-            <Eye className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-
+    <motion.div
+      className="flex h-full min-h-0 flex-col overflow-hidden"
+      initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={
+        shouldReduceMotion ? { duration: 0 } : getNetWorthEnterTransition()
+      }
+    >
       {accounts.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
+        <motion.div
+          className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground"
+          initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0 }
+              : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
+          }
+        >
           <p>No accounts yet. Add your first account to get started.</p>
-        </div>
+        </motion.div>
       ) : (
-        <div className="flex min-h-0 flex-1 gap-4">
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
           {/* Account list */}
-          <div className="flex w-80 shrink-0 flex-col gap-2 overflow-y-auto">
+          <motion.div
+            className="flex w-80 shrink-0 flex-col gap-3 overflow-hidden"
+            initial={shouldReduceMotion ? undefined : { opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0 }
+                : getNetWorthEnterTransition(0.04)
+            }
+          >
+            <motion.div
+              className="shrink-0"
+              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : getNetWorthEnterTransition(0.08)
+              }
+            >
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold leading-none">NetWorth</h1>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10"
+                  onClick={() => setHideValues((v) => !v)}
+                  title={hideValues ? "Show values" : "Hide values"}
+                >
+                  {hideValues ? (
+                    <EyeOff className="h-6 w-6" />
+                  ) : (
+                    <Eye className="h-6 w-6" />
+                  )}
+                </Button>
+              </div>
+              <motion.p
+                className="text-sm text-muted-foreground"
+                key={`${displayCurrency}-${hideValues}-${accounts.length}-${Math.round(total)}`}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : getNetWorthEnterTransition(0.1)
+                }
+              >
+                {accounts.length} account{accounts.length !== 1 ? "s" : ""} —
+                Total:{" "}
+                <span className="font-semibold text-foreground">
+                  {hideValues
+                    ? "****"
+                    : `${CURRENCY_SYMBOLS[displayCurrency]}${total.toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      )}`}
+                </span>
+              </motion.p>
+            </motion.div>
             {/* Currency toggle */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="shrink-0 text-muted-foreground">Currency:</span>
-              <div className="flex flex-1 rounded-md border">
-                {CURRENCIES.map((c, i) => (
+            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+              <motion.div
+                className="flex items-center gap-1.5 text-xs"
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : getNetWorthEnterTransition(0.12)
+                }
+              >
+                <span className="shrink-0 text-muted-foreground">
+                  Currency:
+                </span>
+                <div className="flex flex-1 rounded-md border">
+                  {CURRENCIES.map((c, i) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setDisplayCurrency(c)}
+                      className={`flex-1 px-1.5 py-1 transition-colors ${
+                        i > 0 ? "border-l" : ""
+                      } ${
+                        displayCurrency === c
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      }`}
+                    >
+                      {CURRENCY_SYMBOLS[c]} {c}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+              <motion.div
+                className="flex rounded-md border text-xs"
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : getNetWorthEnterTransition(0.16)
+                }
+              >
+                {(["All", ...ACCOUNT_PURPOSES] as const).map((p, i) => (
                   <button
-                    key={c}
+                    key={p}
                     type="button"
-                    onClick={() => setDisplayCurrency(c)}
+                    onClick={() => setPurposeFilter(p)}
                     className={`flex-1 px-1.5 py-1 transition-colors ${
                       i > 0 ? "border-l" : ""
                     } ${
-                      displayCurrency === c
+                      purposeFilter === p
                         ? "bg-primary text-primary-foreground"
                         : "hover:bg-muted"
                     }`}
                   >
-                    {CURRENCY_SYMBOLS[c]} {c}
+                    {p}
                   </button>
                 ))}
+              </motion.div>
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <AnimatePresence initial={false} mode="popLayout">
+                  <motion.div
+                    className="flex flex-col gap-2"
+                    layout={!shouldReduceMotion}
+                  >
+                    {filteredAccounts.map((account, index) => (
+                      <motion.div
+                        key={account._id}
+                        layout={!shouldReduceMotion}
+                        initial={
+                          shouldReduceMotion
+                            ? undefined
+                            : { opacity: 0, y: 12, scale: 0.98 }
+                        }
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={
+                          shouldReduceMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: -8, scale: 0.98 }
+                        }
+                        transition={
+                          shouldReduceMotion
+                            ? { duration: 0 }
+                            : getNetWorthEnterTransition(
+                                Math.min(index, 6) * NETWORTH_MOTION_STAGGER,
+                              )
+                        }
+                      >
+                        <AccountListItem
+                          account={account}
+                          displayCurrency={displayCurrency}
+                          exchangeRates={exchangeRates}
+                          hideValues={hideValues}
+                          selected={selectedAccount?._id === account._id}
+                          onSelect={setSelectedAccount}
+                          onEdit={(a) => {
+                            setEditingAccount(a);
+                            setAccountDialogOpen(true);
+                          }}
+                          onAddTransaction={(a) => {
+                            setTxAccount(a);
+                            setTxMode("transaction");
+                            setTxDialogOpen(true);
+                          }}
+                          onUpdateValue={(a) => {
+                            setTxAccount(a);
+                            setTxMode("update-value");
+                            setTxDialogOpen(true);
+                          }}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
               </div>
-            </div>
-            {/* Purpose filter */}
-            <div className="flex rounded-md border text-xs">
-              {(["All", ...ACCOUNT_PURPOSES] as const).map((p, i) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPurposeFilter(p)}
-                  className={`flex-1 px-1.5 py-1 transition-colors ${
-                    i > 0 ? "border-l" : ""
-                  } ${
-                    purposeFilter === p
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
+              <motion.div
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : getNetWorthEnterTransition(0.2)
+                }
+              >
+                <Button
+                  variant="outline"
+                  className="w-full shrink-0"
+                  onClick={() => {
+                    setEditingAccount(null);
+                    setAccountDialogOpen(true);
+                  }}
                 >
-                  {p}
-                </button>
-              ))}
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Account
+                </Button>
+              </motion.div>
             </div>
-            {filteredAccounts.map((account) => (
-              <AccountListItem
-                key={account._id}
-                account={account}
-                displayCurrency={displayCurrency}
-                exchangeRates={exchangeRates}
-                hideValues={hideValues}
-                selected={selectedAccount?._id === account._id}
-                onSelect={setSelectedAccount}
-                onEdit={(a) => {
-                  setEditingAccount(a);
-                  setAccountDialogOpen(true);
-                }}
-                onAddTransaction={(a) => {
-                  setTxAccount(a);
-                  setTxMode("transaction");
-                  setTxDialogOpen(true);
-                }}
-                onUpdateValue={(a) => {
-                  setTxAccount(a);
-                  setTxMode("update-value");
-                  setTxDialogOpen(true);
-                }}
-              />
-            ))}
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setEditingAccount(null);
-                setAccountDialogOpen(true);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Account
-            </Button>
-          </div>
+          </motion.div>
 
           {/* Right panel: summary + detail */}
-          <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <motion.div
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+            initial={shouldReduceMotion ? undefined : { opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0 }
+                : getNetWorthEnterTransition(0.08)
+            }
+          >
             {/* Net Worth Summary */}
-            <div className="min-h-0 flex-1">
+            <motion.div
+              className="min-h-0 flex-[2]"
+              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : getNetWorthEnterTransition(0.12)
+              }
+            >
               <NetWorthSummary
                 accounts={accounts}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
                 hideValues={hideValues}
               />
-            </div>
+            </motion.div>
 
             {/* Transaction detail */}
-            <div className="min-h-0 flex-1">
-              {selectedAccount ? (
-                <TransactionDetailPanel
-                  account={selectedAccount}
-                  displayCurrency={displayCurrency}
-                  exchangeRates={exchangeRates}
-                  hideValues={hideValues}
-                  onEdit={(a) => {
-                    setEditingAccount(a);
-                    setAccountDialogOpen(true);
-                  }}
-                  onDelete={handleDelete}
-                  onAddTransaction={(a) => {
-                    setTxAccount(a);
-                    setTxMode("transaction");
-                    setTxDialogOpen(true);
-                  }}
-                  onUpdateValue={(a) => {
-                    setTxAccount(a);
-                    setTxMode("update-value");
-                    setTxDialogOpen(true);
-                  }}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center rounded-lg border border-dashed">
-                  <p className="text-sm text-muted-foreground">
-                    Select an account to view transactions
-                  </p>
-                </div>
-              )}
+            <div className="min-h-0 flex-[3]">
+              <AnimatePresence mode="wait" initial={false}>
+                {selectedAccount ? (
+                  <motion.div
+                    key={selectedAccount._id}
+                    className="h-full"
+                    initial={
+                      shouldReduceMotion
+                        ? undefined
+                        : { opacity: 0, y: 14, scale: 0.995 }
+                    }
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={
+                      shouldReduceMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: -10, scale: 0.995 }
+                    }
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : getNetWorthEnterTransition(0.04)
+                    }
+                  >
+                    <TransactionDetailPanel
+                      account={selectedAccount}
+                      displayCurrency={displayCurrency}
+                      exchangeRates={exchangeRates}
+                      hideValues={hideValues}
+                      onEdit={(a) => {
+                        setEditingAccount(a);
+                        setAccountDialogOpen(true);
+                      }}
+                      onDelete={handleDelete}
+                      onAddTransaction={(a) => {
+                        setTxAccount(a);
+                        setTxMode("transaction");
+                        setTxDialogOpen(true);
+                      }}
+                      onUpdateValue={(a) => {
+                        setTxAccount(a);
+                        setTxMode("update-value");
+                        setTxDialogOpen(true);
+                      }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="no-selection"
+                    className="flex h-full items-center justify-center rounded-lg border border-dashed"
+                    initial={
+                      shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
+                    }
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={
+                      shouldReduceMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: -8 }
+                    }
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : getNetWorthEnterTransition(0.04)
+                    }
+                  >
+                    <p className="text-sm text-muted-foreground">
+                      Select an account to view transactions
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -423,6 +602,6 @@ export default function NetWorthClient() {
         loading={saving}
         key={`tx-${txAccount?._id ?? "none"}-${txMode}`}
       />
-    </div>
+    </motion.div>
   );
 }

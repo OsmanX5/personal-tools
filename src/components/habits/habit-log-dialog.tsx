@@ -101,6 +101,7 @@ export function HabitLogDialog({
               onChange={(e) => setNote(e.target.value)}
               placeholder="Optional note…"
               rows={2}
+              autoFocus={!habit.hasValue}
             />
           </div>
 
