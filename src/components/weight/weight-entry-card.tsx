@@ -14,12 +14,14 @@ interface WeightEntryCardProps {
   entry: WeightEntry;
   onEdit: (entry: WeightEntry) => void;
   onDelete: (id: string) => void;
+  hideValues?: boolean;
 }
 
 export function WeightEntryCard({
   entry,
   onEdit,
   onDelete,
+  hideValues,
 }: WeightEntryCardProps) {
   const bmiCategory = getBmiCategory(entry.bmi);
   const dateStr = new Date(entry.date).toLocaleDateString("en-US", {
@@ -35,7 +37,9 @@ export function WeightEntryCard({
           {/* Left: weight + date */}
           <div className="flex items-center gap-4">
             <div>
-              <span className="text-xl font-bold">{entry.weight}</span>
+              <span className="text-xl font-bold">
+                {hideValues ? "****" : entry.weight}
+              </span>
               <span className="ml-1 text-sm text-muted-foreground">kg</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -50,7 +54,7 @@ export function WeightEntryCard({
               variant="outline"
               className={`gap-1 ${BMI_CATEGORY_COLORS[bmiCategory]}`}
             >
-              BMI {entry.bmi} · {bmiCategory}
+              BMI {hideValues ? "**" : entry.bmi} · {bmiCategory}
             </Badge>
             <Button
               variant="ghost"

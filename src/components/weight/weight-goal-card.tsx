@@ -20,6 +20,7 @@ interface WeightGoalCardProps {
   onDelete: (id: string) => void;
   onMarkAchieved: (id: string) => void;
   onMarkAbandoned: (id: string) => void;
+  hideValues?: boolean;
 }
 
 export function WeightGoalCard({
@@ -29,6 +30,7 @@ export function WeightGoalCard({
   onDelete,
   onMarkAchieved,
   onMarkAbandoned,
+  hideValues,
 }: WeightGoalCardProps) {
   const targetDateStr = goal.targetDate
     ? new Date(goal.targetDate).toLocaleDateString("en-US", {
@@ -64,9 +66,11 @@ export function WeightGoalCard({
           <div className="flex items-center gap-3">
             <Target className="h-4 w-4 text-muted-foreground" />
             <div>
-              <span className="font-semibold">{goal.targetWeight} kg</span>
+              <span className="font-semibold">
+                {hideValues ? "**" : goal.targetWeight} kg
+              </span>
               <span className="ml-2 text-xs text-muted-foreground">
-                from {goal.startWeight} kg
+                from {hideValues ? "**" : goal.startWeight} kg
               </span>
             </div>
             <Badge

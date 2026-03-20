@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Plus,
@@ -25,6 +26,14 @@ import {
   STATUS_HEADER_COLORS,
   PRIORITY_COLORS,
 } from "@/lib/courses-types";
+import {
+  coursesSectionVariants,
+  coursesWishlistItemVariants,
+  coursesFilterChipVariants,
+  COURSES_MOTION_DURATION,
+  COURSES_MOTION_EASE,
+  COURSES_MOTION_STAGGER,
+} from "@/components/courses/courses-motion";
 
 const STATUS_ICONS: Record<CourseStatus, React.ReactNode> = {
   Wishlist: <Star className="h-4 w-4" />,
@@ -48,6 +57,7 @@ const STAT_CARD_COLORS: Record<CourseStatus, string> = {
 };
 
 export default function CoursesClient() {
+  const shouldReduceMotion = useReducedMotion();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -226,7 +236,15 @@ export default function CoursesClient() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <motion.div
+        className="flex items-center justify-between"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: COURSES_MOTION_DURATION,
+          ease: COURSES_MOTION_EASE,
+        }}
+      >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <BookOpen className="h-5 w-5 text-primary" />
@@ -250,10 +268,19 @@ export default function CoursesClient() {
           <Plus className="mr-1 h-4 w-4" />
           Add Course
         </Button>
-      </div>
+      </motion.div>
 
       {/* Status overview cards */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <motion.div
+        className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: COURSES_MOTION_DURATION,
+          delay: COURSES_MOTION_STAGGER,
+          ease: COURSES_MOTION_EASE,
+        }}
+      >
         {(["In Progress", "Paused", "Completed", "Dropped"] as const).map(
           (status) => (
             <button
@@ -279,10 +306,19 @@ export default function CoursesClient() {
             </button>
           ),
         )}
-      </div>
+      </motion.div>
 
       {/* Filters row */}
-      <div className="flex flex-wrap items-center gap-2">
+      <motion.div
+        className="flex flex-wrap items-center gap-2"
+        initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: COURSES_MOTION_DURATION,
+          delay: COURSES_MOTION_STAGGER * 2,
+          ease: COURSES_MOTION_EASE,
+        }}
+      >
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Filter className="h-3.5 w-3.5" />
           <span>Filters:</span>
@@ -327,26 +363,43 @@ export default function CoursesClient() {
               ))}
           </select>
         )}
-        {hasActiveFilters && (
-          <>
-            <div className="h-4 w-px bg-border" />
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+        <AnimatePresence>
+          {hasActiveFilters && (
+            <motion.div
+              className="flex items-center gap-2"
+              variants={coursesFilterChipVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
-              <X className="h-3 w-3" />
-              Clear filters
-            </button>
-            <span className="text-xs text-muted-foreground">
-              {filteredCourses.length} result
-              {filteredCourses.length !== 1 ? "s" : ""}
-            </span>
-          </>
-        )}
-      </div>
+              <div className="h-4 w-px bg-border" />
+              <button
+                onClick={clearFilters}
+                className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Clear filters
+              </button>
+              <span className="text-xs text-muted-foreground">
+                {filteredCourses.length} result
+                {filteredCourses.length !== 1 ? "s" : ""}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Two-column layout: Wishlist sidebar + main content */}
-      <div className="flex min-h-0 flex-1 gap-4">
+      <motion.div
+        className="flex min-h-0 flex-1 gap-4"
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{
+          duration: COURSES_MOTION_DURATION,
+          delay: COURSES_MOTION_STAGGER * 3,
+          ease: COURSES_MOTION_EASE,
+        }}
+      >
         {/* Wishlist sidebar */}
         <div className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto">
           <div className="flex items-center justify-between">
@@ -370,121 +423,167 @@ export default function CoursesClient() {
             </Button>
           </div>
 
-          {groupedByStatus["Wishlist"].length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed py-8 text-center">
-              <Star className="h-6 w-6 text-muted-foreground/40" />
-              <p className="text-xs text-muted-foreground">
-                No wishlist courses
-              </p>
-            </div>
-          ) : (
-            groupedByStatus["Wishlist"].map((course) => (
-              <button
-                key={course._id}
-                onClick={() => handleEdit(course)}
-                className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-50/50 px-3 py-2 text-left transition-all hover:shadow-sm dark:border-blue-900 dark:bg-blue-950/30"
+          <AnimatePresence mode="popLayout">
+            {groupedByStatus["Wishlist"].length === 0 ? (
+              <motion.div
+                key="empty"
+                className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed py-8 text-center"
+                initial={shouldReduceMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: COURSES_MOTION_DURATION,
+                  ease: COURSES_MOTION_EASE,
+                }}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate text-sm font-medium">
-                    {course.title}
-                  </span>
-                  {course.url && (
-                    <a
-                      href={course.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 text-muted-foreground hover:text-foreground"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-muted-foreground">
-                    {course.platform}
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[course.priority]}`}
-                  >
-                    {course.priority}
-                  </Badge>
-                  {course.tags.slice(0, 2).map((tag) => (
+                <Star className="h-6 w-6 text-muted-foreground/40" />
+                <p className="text-xs text-muted-foreground">
+                  No wishlist courses
+                </p>
+              </motion.div>
+            ) : (
+              groupedByStatus["Wishlist"].map((course, i) => (
+                <motion.button
+                  key={course._id}
+                  layout
+                  custom={i}
+                  variants={
+                    shouldReduceMotion ? undefined : coursesWishlistItemVariants
+                  }
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  onClick={() => handleEdit(course)}
+                  className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-50/50 px-3 py-2 text-left transition-all hover:shadow-sm dark:border-blue-900 dark:bg-blue-950/30"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-medium">
+                      {course.title}
+                    </span>
+                    {course.url && (
+                      <a
+                        href={course.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">
+                      {course.platform}
+                    </span>
                     <Badge
-                      key={tag}
-                      variant="outline"
-                      className="text-[10px] px-1 py-0"
+                      variant="secondary"
+                      className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[course.priority]}`}
                     >
-                      {tag}
+                      {course.priority}
                     </Badge>
-                  ))}
-                </div>
-              </button>
-            ))
-          )}
+                    {course.tags.slice(0, 2).map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="outline"
+                        className="text-[10px] px-1 py-0"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </motion.button>
+              ))
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Main content: other statuses */}
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-4">
-          {(["In Progress", "Paused", "Completed", "Dropped"] as const).map(
-            (status) => {
-              const group = groupedByStatus[status];
-              if (group.length === 0) return null;
-              return (
-                <section key={status}>
-                  <div
-                    className={`mb-3 flex items-center gap-2 rounded-md px-3 py-1.5 ${STATUS_HEADER_COLORS[status]}`}
+          <AnimatePresence mode="popLayout">
+            {(["In Progress", "Paused", "Completed", "Dropped"] as const).map(
+              (status, i) => {
+                const group = groupedByStatus[status];
+                if (group.length === 0) return null;
+                return (
+                  <motion.section
+                    key={status}
+                    custom={i}
+                    variants={
+                      shouldReduceMotion ? undefined : coursesSectionVariants
+                    }
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
                   >
-                    <span className="text-white/80">
-                      {STATUS_ICONS[status]}
-                    </span>
-                    <h2 className="text-sm font-semibold text-white">
-                      {status}
-                    </h2>
-                    <Badge
-                      variant="secondary"
-                      className="bg-white/20 text-xs text-white hover:bg-white/30"
+                    <div
+                      className={`mb-3 flex items-center gap-2 rounded-md px-3 py-1.5 ${STATUS_HEADER_COLORS[status]}`}
                     >
-                      {group.length}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {group.map((course) => (
-                      <CourseCard
-                        key={course._id}
-                        course={course}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onUpdateProgress={handleUpdateProgress}
-                        defaultExpanded={status === "In Progress"}
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            },
-          )}
-
-          {filteredCourses.filter((c) => c.status !== "Wishlist").length ===
-            0 &&
-            groupedByStatus["Wishlist"].length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-                <BookOpen className="h-10 w-10 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  {hasActiveFilters
-                    ? "No courses match the current filters"
-                    : "No courses yet — add your first one!"}
-                </p>
-                {hasActiveFilters && (
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
-                    Clear filters
-                  </Button>
-                )}
-              </div>
+                      <span className="text-white/80">
+                        {STATUS_ICONS[status]}
+                      </span>
+                      <h2 className="text-sm font-semibold text-white">
+                        {status}
+                      </h2>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/20 text-xs text-white hover:bg-white/30"
+                      >
+                        {group.length}
+                      </Badge>
+                    </div>
+                    <motion.div
+                      layout
+                      className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+                    >
+                      {group.map((course) => (
+                        <CourseCard
+                          key={course._id}
+                          course={course}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onUpdateProgress={handleUpdateProgress}
+                          defaultExpanded={status === "In Progress"}
+                        />
+                      ))}
+                    </motion.div>
+                  </motion.section>
+                );
+              },
             )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {filteredCourses.filter((c) => c.status !== "Wishlist").length ===
+              0 &&
+              groupedByStatus["Wishlist"].length === 0 && (
+                <motion.div
+                  className="flex flex-col items-center justify-center gap-2 py-12 text-center"
+                  initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: COURSES_MOTION_DURATION,
+                    ease: COURSES_MOTION_EASE,
+                  }}
+                >
+                  <BookOpen className="h-10 w-10 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">
+                    {hasActiveFilters
+                      ? "No courses match the current filters"
+                      : "No courses yet — add your first one!"}
+                  </p>
+                  {hasActiveFilters && (
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  )}
+                </motion.div>
+              )}
+          </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
 
       {/* Form Dialog */}
       <CourseFormDialog

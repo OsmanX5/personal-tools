@@ -218,7 +218,14 @@ export default function NetWorthClient() {
     "All",
   );
 
-  const [hideValues, setHideValues] = useState(false);
+  const [hideValues, setHideValues] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("networth-hide-values") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("networth-hide-values", String(hideValues));
+  }, [hideValues]);
 
   const filteredAccounts = useMemo(
     () =>

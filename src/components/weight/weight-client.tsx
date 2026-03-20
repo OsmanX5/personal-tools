@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
-import { Plus, Target, Scale, Ruler, Pencil } from "lucide-react";
+import { Plus, Target, Scale, Ruler, Pencil, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,16 @@ export default function WeightClient() {
   // Goal dialog state
   const [goalDialogOpen, setGoalDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<WeightGoal | null>(null);
+
+  // Hide values toggle
+  const [hideValues, setHideValues] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("weight-hide-values") === "true";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("weight-hide-values", String(hideValues));
+  }, [hideValues]);
 
   // Height editing state
   const [editingHeight, setEditingHeight] = useState(false);
@@ -245,7 +255,22 @@ export default function WeightClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Weight Tracker</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Weight Tracker</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setHideValues((v) => !v)}
+              title={hideValues ? "Show values" : "Hide values"}
+            >
+              {hideValues ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             {entries.length} entr{entries.length !== 1 ? "ies" : "y"} logged
           </p>
@@ -284,7 +309,9 @@ export default function WeightClient() {
             <div>
               <p className="text-sm text-muted-foreground">Current Weight</p>
               {latestEntry ? (
-                <p className="text-2xl font-bold">{latestEntry.weight} kg</p>
+                <p className="text-2xl font-bold">
+                  {hideValues ? "****" : `${latestEntry.weight} kg`}
+                </p>
               ) : (
                 <p className="text-lg text-muted-foreground">No entries yet</p>
               )}
@@ -358,7 +385,9 @@ export default function WeightClient() {
               <p className="text-sm text-muted-foreground">Body Mass Index</p>
               {latestEntry && bmiCategory ? (
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">{latestEntry.bmi}</span>
+                  <span className="text-2xl font-bold">
+                    {hideValues ? "**" : latestEntry.bmi}
+                  </span>
                   <Badge
                     variant="outline"
                     className={BMI_CATEGORY_COLORS[bmiCategory]}
@@ -381,7 +410,7 @@ export default function WeightClient() {
               <p className="text-sm text-muted-foreground">Active Goal</p>
               {activeGoal ? (
                 <p className="text-2xl font-bold">
-                  {activeGoal.targetWeight} kg
+                  {hideValues ? "****" : `${activeGoal.targetWeight} kg`}
                 </p>
               ) : (
                 <p className="text-lg text-muted-foreground">No active goal</p>
@@ -410,6 +439,7 @@ export default function WeightClient() {
                 onMarkAbandoned={(id) =>
                   handleGoalStatusChange(id, "Abandoned")
                 }
+                hideValues={hideValues}
               />
             ))}
           </div>
@@ -437,6 +467,7 @@ export default function WeightClient() {
                 entry={entry}
                 onEdit={handleEntryEdit}
                 onDelete={handleEntryDelete}
+                hideValues={hideValues}
               />
             ))}
           </div>
