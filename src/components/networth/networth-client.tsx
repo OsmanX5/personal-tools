@@ -23,6 +23,7 @@ import {
   CURRENCY_SYMBOLS,
   ACCOUNT_PURPOSES,
 } from "@/lib/networth-types";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   getNetWorthEnterTransition,
   NETWORTH_MOTION_FAST_DURATION,
@@ -367,27 +368,18 @@ export default function NetWorthClient() {
                 <span className="shrink-0 text-muted-foreground">
                   Currency:
                 </span>
-                <div className="flex flex-1 rounded-md border">
-                  {CURRENCIES.map((c, i) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setDisplayCurrency(c)}
-                      className={`flex-1 px-1.5 py-1 transition-colors ${
-                        i > 0 ? "border-l" : ""
-                      } ${
-                        displayCurrency === c
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      }`}
-                    >
-                      {CURRENCY_SYMBOLS[c]} {c}
-                    </button>
-                  ))}
-                </div>
+                <ToggleGroup
+                  items={CURRENCIES.map((c) => ({
+                    value: c,
+                    label: `${CURRENCY_SYMBOLS[c]} ${c}`,
+                  }))}
+                  value={displayCurrency}
+                  onValueChange={setDisplayCurrency}
+                  className="flex-1"
+                  buttonClassName="flex-1 px-1 text-xs"
+                />
               </motion.div>
               <motion.div
-                className="flex rounded-md border text-xs"
                 initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={
@@ -396,22 +388,12 @@ export default function NetWorthClient() {
                     : getNetWorthEnterTransition(0.16)
                 }
               >
-                {(["All", ...ACCOUNT_PURPOSES] as const).map((p, i) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPurposeFilter(p)}
-                    className={`flex-1 px-1.5 py-1 transition-colors ${
-                      i > 0 ? "border-l" : ""
-                    } ${
-                      purposeFilter === p
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                ))}
+                <ToggleGroup
+                  items={["All" as const, ...ACCOUNT_PURPOSES]}
+                  value={purposeFilter}
+                  onValueChange={setPurposeFilter}
+                  buttonClassName="flex-1 px-1 text-xs"
+                />
               </motion.div>
               <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <AnimatePresence initial={false} mode="popLayout">

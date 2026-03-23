@@ -6,6 +6,7 @@ import {
   Receipt,
   CheckSquare,
   GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 
 export interface ToolConfig {
@@ -78,6 +79,14 @@ export const tools: ToolConfig[] = [
     description:
       "Organize your learning — track courses, books, and tutorials with progress and skill tags.",
     icon: GraduationCap,
+    status: "active",
+  },
+  {
+    name: "Financial Planning",
+    slug: "planning",
+    description:
+      "Track income, monitor emergency fund, and project your financial future.",
+    icon: TrendingUp,
     status: "active",
   },
 ];

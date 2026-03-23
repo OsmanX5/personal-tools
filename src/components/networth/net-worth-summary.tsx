@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   Tooltip,
   ResponsiveContainer,
@@ -301,70 +302,40 @@ export function NetWorthSummary({
           shouldReduceMotion ? { duration: 0 } : getNetWorthEnterTransition()
         }
       >
-        <div className="flex rounded-md border text-xs">
-          {(["breakdown", "trend"] as const).map((v, i) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setView(v)}
-              className={`px-3 py-1 capitalize transition-colors ${
-                i > 0 ? "border-l" : ""
-              } ${
-                view === v
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        <ToggleGroup
+          items={(["breakdown", "trend"] as const).map((v) => ({
+            value: v,
+            label: v.charAt(0).toUpperCase() + v.slice(1),
+          }))}
+          value={view}
+          onValueChange={setView}
+          size="xs"
+        />
         {view === "breakdown" && (
-          <div className="flex rounded-md border text-xs">
-            {(
+          <ToggleGroup
+            items={(
               [
                 ["account", "Account"],
                 ["currency", "Currency"],
                 ["liquidity", "Liquidity"],
                 ["purpose", "Purpose"],
               ] as [BreakdownGroup, string][]
-            ).map(([key, label], i) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setBreakdownGroup(key)}
-                className={`px-3 py-1 transition-colors ${
-                  i > 0 ? "border-l" : ""
-                } ${
-                  breakdownGroup === key
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+            ).map(([key, label]) => ({ value: key, label }))}
+            value={breakdownGroup}
+            onValueChange={setBreakdownGroup}
+            size="xs"
+          />
         )}
         {view === "trend" && (
-          <div className="flex rounded-md border text-xs">
-            {(["12m", "30d"] as const).map((p, i) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setTrendPeriod(p)}
-                className={`px-3 py-1 uppercase transition-colors ${
-                  i > 0 ? "border-l" : ""
-                } ${
-                  trendPeriod === p
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-muted"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+          <ToggleGroup
+            items={(["12m", "30d"] as const).map((p) => ({
+              value: p,
+              label: p.toUpperCase(),
+            }))}
+            value={trendPeriod}
+            onValueChange={setTrendPeriod}
+            size="xs"
+          />
         )}
       </motion.div>
       <motion.div

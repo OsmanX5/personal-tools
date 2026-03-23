@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -205,79 +206,31 @@ export function AccountFormDialog({
           {/* Purpose */}
           <div className="space-y-1.5">
             <Label>Purpose</Label>
-            <div className="flex rounded-md border">
-              {ACCOUNT_PURPOSES.map((p, i) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() =>
-                    update("purpose", p as NetWorthAccountFormData["purpose"])
-                  }
-                  className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
-                    i > 0 ? "border-l" : ""
-                  } ${
-                    form.purpose === p
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
+            <ToggleGroup
+              items={ACCOUNT_PURPOSES}
+              value={form.purpose}
+              onValueChange={(v) => update("purpose", v)}
+            />
           </div>
 
           {/* Location */}
           <div className="space-y-1.5">
             <Label>Location</Label>
-            <div className="flex rounded-md border">
-              {ACCOUNT_LOCATIONS.map((l, i) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() =>
-                    update("location", l as NetWorthAccountFormData["location"])
-                  }
-                  className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
-                    i > 0 ? "border-l" : ""
-                  } ${
-                    form.location === l
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            <ToggleGroup
+              items={ACCOUNT_LOCATIONS}
+              value={form.location}
+              onValueChange={(v) => update("location", v)}
+            />
           </div>
 
           {/* Liquidity */}
           <div className="space-y-1.5">
             <Label>Liquidity</Label>
-            <div className="flex rounded-md border">
-              {ACCOUNT_LIQUIDITIES.map((l, i) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() =>
-                    update(
-                      "liquidity",
-                      l as NetWorthAccountFormData["liquidity"],
-                    )
-                  }
-                  className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
-                    i > 0 ? "border-l" : ""
-                  } ${
-                    form.liquidity === l
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            <ToggleGroup
+              items={ACCOUNT_LIQUIDITIES}
+              value={form.liquidity}
+              onValueChange={(v) => update("liquidity", v)}
+            />
           </div>
 
           {/* Tags */}

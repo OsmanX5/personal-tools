@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   ResponsiveContainer,
   LineChart,
@@ -60,19 +60,16 @@ export function WeightChart({ entries, goalWeight }: WeightChartProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold">Weight Trend</CardTitle>
-        <div className="flex gap-1">
-          {([7, 30] as const).map((d) => (
-            <Button
-              key={d}
-              variant={range === d ? "default" : "outline"}
-              size="sm"
-              className="h-7 px-2.5 text-xs"
-              onClick={() => setRange(d)}
-            >
-              {d}D
-            </Button>
-          ))}
-        </div>
+        <ToggleGroup
+          items={([7, 30] as const).map((d) => ({
+            value: String(d),
+            label: `${d}D`,
+          }))}
+          value={String(range)}
+          onValueChange={(v) => setRange(Number(v) as RangeOption)}
+          size="sm"
+          buttonClassName="h-7 px-2.5 text-xs"
+        />
       </CardHeader>
       <CardContent className="px-2 pb-4">
         {chartData.length === 0 ? (

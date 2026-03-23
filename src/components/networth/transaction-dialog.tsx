@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -175,18 +176,15 @@ export function TransactionDialog({
               {/* Update Kind toggle */}
               <div className="space-y-1.5">
                 <Label>Update Kind</Label>
-                <div className="flex rounded-md border text-sm">
-                  {(["MarketChange", "Transaction"] as const).map((k, i) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setUpdateKind(k)}
-                      className={`flex-1 px-3 py-1.5 transition-colors ${i > 0 ? "border-l" : ""} ${updateKind === k ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                    >
-                      {k === "MarketChange" ? "Market Change" : "Transaction"}
-                    </button>
-                  ))}
-                </div>
+                <ToggleGroup
+                  items={[
+                    { value: "MarketChange" as const, label: "Market Change" },
+                    { value: "Transaction" as const, label: "Transaction" },
+                  ]}
+                  value={updateKind}
+                  onValueChange={setUpdateKind}
+                  buttonClassName="flex-1"
+                />
               </div>
 
               {updateKind === "MarketChange" ? (
