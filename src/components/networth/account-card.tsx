@@ -84,6 +84,11 @@ export function AccountListItem({
     displayCurrency,
     exchangeRates,
   );
+  const startDate = new Date(account.startDate ?? account.createdAt);
+  const sinceLabel = startDate.toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric",
+  });
   const shouldReduceMotion = useReducedMotion();
 
   return (
@@ -108,9 +113,14 @@ export function AccountListItem({
       >
         <CardContent className="flex items-center gap-3 px-3">
           <div className="min-w-0 flex-1">
-            <span className="truncate text-sm font-semibold">
-              {account.name}
-            </span>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+              <span className="truncate text-sm font-semibold">
+                {account.name}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                Since {sinceLabel}
+              </span>
+            </div>
             {accountCurrency !== displayCurrency && !hideValues && (
               <span className="ml-1.5 text-xs text-muted-foreground/80">
                 (

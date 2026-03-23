@@ -23,7 +23,7 @@ export async function PUT(
   const { id } = await params;
   const body = await request.json();
   const account = await NetWorthAccount.findByIdAndUpdate(id, body, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
 

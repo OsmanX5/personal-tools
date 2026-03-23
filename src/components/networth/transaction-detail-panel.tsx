@@ -41,6 +41,7 @@ interface TransactionDetailPanelProps {
   onDelete: (id: string) => void;
   onAddTransaction: (account: NetWorthAccount) => void;
   onUpdateValue: (account: NetWorthAccount) => void;
+  onDeleteTransaction: (accountId: string, txId: string) => void;
 }
 
 export function TransactionDetailPanel({
@@ -52,9 +53,13 @@ export function TransactionDetailPanel({
   onDelete,
   onAddTransaction,
   onUpdateValue,
+  onDeleteTransaction,
 }: TransactionDetailPanelProps) {
   const shouldReduceMotion = useReducedMotion();
   const accountCurrency = account.currency ?? "USD";
+  const accountStartDate = account.startDate ?? account.createdAt;
+  const accountStartBalance = account.startBalance ?? account.amount;
+  const startDateLabel = new Date(accountStartDate).toLocaleDateString();
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
   const displayAmt = convertAmount(
     account.amount,
@@ -65,6 +70,53 @@ export function TransactionDetailPanel({
   const transactions = account.transactions.slice().reverse();
 
   const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("30d");
+
+  const accountPeriodChanges = useMemo(() => {
+    const txs = account.transactions
+      .slice()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const getAmountAt = (endOfDay: Date) => {
+      const created = new Date(accountStartDate);
+      if (created > endOfDay) return 0;
+      if (txs.length === 0)
+        return convertAmount(
+          account.amount,
+          accountCurrency,
+          displayCurrency,
+          exchangeRates,
+        );
+      const sumAfter = txs
+        .filter((tx) => new Date(tx.date) > endOfDay)
+        .reduce((s, tx) => s + tx.amount, 0);
+      return convertAmount(
+        Math.max(0, account.amount - sumAfter),
+        accountCurrency,
+        displayCurrency,
+        exchangeRates,
+      );
+    };
+    const now = new Date();
+    const eod = (daysAgo: number) =>
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - daysAgo,
+        23,
+        59,
+        59,
+      );
+    return [
+      { label: "1D", past: getAmountAt(eod(1)) },
+      { label: "1W", past: getAmountAt(eod(7)) },
+      { label: "1M", past: getAmountAt(eod(30)) },
+    ];
+  }, [
+    account,
+    accountCurrency,
+    accountStartDate,
+    displayCurrency,
+    exchangeRates,
+  ]);
 
   const historyData12m = useMemo(() => {
     const now = new Date();
@@ -93,7 +145,7 @@ export function TransactionDetailPanel({
         59,
         59,
       );
-      const created = new Date(account.createdAt);
+      const created = new Date(accountStartDate);
       if (created > endOfMonth) {
         return { month: label, value: 0 };
       }
@@ -125,7 +177,13 @@ export function TransactionDetailPanel({
           ) / 100,
       };
     });
-  }, [account, accountCurrency, displayCurrency, exchangeRates]);
+  }, [
+    account,
+    accountCurrency,
+    accountStartDate,
+    displayCurrency,
+    exchangeRates,
+  ]);
 
   const historyData30d = useMemo(() => {
     const now = new Date();
@@ -154,7 +212,7 @@ export function TransactionDetailPanel({
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return days.map(({ label, endOfDay }) => {
-      const created = new Date(account.createdAt);
+      const created = new Date(accountStartDate);
       if (created > endOfDay) {
         return { month: label, value: 0 };
       }
@@ -186,7 +244,13 @@ export function TransactionDetailPanel({
           ) / 100,
       };
     });
-  }, [account, accountCurrency, displayCurrency, exchangeRates]);
+  }, [
+    account,
+    accountCurrency,
+    accountStartDate,
+    displayCurrency,
+    exchangeRates,
+  ]);
 
   return (
     <Card className="flex h-full flex-col overflow-hidden">
@@ -288,12 +352,12 @@ export function TransactionDetailPanel({
                 }
               >
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-muted-foreground">
-                    Balance Summary
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                    Balance
                   </p>
                   <div className="flex flex-wrap items-baseline gap-2">
                     <motion.span
-                      className="text-3xl font-bold"
+                      className="text-3xl font-extrabold tracking-tight"
                       key={`${account._id}-${displayCurrency}-${hideValues}-${Math.round(displayAmt)}`}
                       initial={
                         shouldReduceMotion ? undefined : { opacity: 0, y: 4 }
@@ -325,12 +389,66 @@ export function TransactionDetailPanel({
                       </span>
                     )}
                   </div>
+                  <div className="mt-3 flex flex-col gap-1.5 border-t pt-3">
+                    {accountPeriodChanges.map(({ label, past }) => {
+                      const change = displayAmt - past;
+                      const pct = past > 0 ? (change / past) * 100 : null;
+                      const isPos = change >= 0;
+                      const fmtAmt = (v: number) => {
+                        const abs = Math.abs(v);
+                        const str =
+                          abs >= 1_000_000
+                            ? `${symbol}${(abs / 1_000_000).toFixed(1)}M`
+                            : abs >= 1000
+                              ? `${symbol}${(abs / 1000).toFixed(1)}k`
+                              : `${symbol}${abs.toFixed(0)}`;
+                        return `${v >= 0 ? "+" : "-"}${str}`;
+                      };
+                      return (
+                        <div
+                          key={label}
+                          className="flex items-center justify-between"
+                        >
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                            {label}
+                          </span>
+                          {hideValues ? (
+                            <span className="text-xs font-semibold">****</span>
+                          ) : (
+                            <span
+                              className={`text-xs font-semibold tabular-nums ${
+                                isPos ? "text-green-600" : "text-red-500"
+                              }`}
+                            >
+                              {fmtAmt(change)}
+                              {pct !== null && (
+                                <span className="ml-1 font-normal opacity-70">
+                                  ({pct >= 0 ? "+" : ""}
+                                  {pct.toFixed(1)}%)
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {[
                     account.purpose,
                     account.location,
                     `${CURRENCY_SYMBOLS[accountCurrency]} ${accountCurrency}`,
+                    `Start: ${startDateLabel}`,
+                    hideValues
+                      ? "Start Balance: ****"
+                      : `Start Balance: ${CURRENCY_SYMBOLS[accountCurrency]}${accountStartBalance.toLocaleString(
+                          undefined,
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
+                        )}`,
                   ].map((label, index) => (
                     <motion.div
                       key={label}
@@ -483,7 +601,7 @@ export function TransactionDetailPanel({
                 {transactions.slice(0, 5).map((tx, index) => (
                   <motion.div
                     key={tx._id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    className="group flex items-center justify-between rounded-md border px-3 py-2 text-sm"
                     initial={
                       shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
                     }
@@ -517,6 +635,15 @@ export function TransactionDetailPanel({
                               },
                             )}`}
                       </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        onClick={() => onDeleteTransaction(account._id, tx._id)}
+                        title="Delete transaction"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </motion.div>
                 ))}

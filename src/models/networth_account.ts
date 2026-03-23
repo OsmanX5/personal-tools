@@ -21,6 +21,8 @@ export interface INetWorthAccount extends Document {
   description?: string;
   status: "active" | "archived";
   amount: number;
+  startBalance: number;
+  startDate: Date;
   currency: CurrencyType;
   tags: string[];
   createdAt: Date;
@@ -99,6 +101,14 @@ const NetWorthAccountSchema = new Schema<INetWorthAccount>(
     amount: {
       type: Number,
       default: 0,
+    },
+    startBalance: {
+      type: Number,
+      default: 0,
+    },
+    startDate: {
+      type: Date,
+      default: Date.now,
     },
     currency: {
       type: String,

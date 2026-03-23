@@ -62,6 +62,8 @@ export interface NetWorthAccount {
   description?: string;
   status: AccountStatus;
   amount: number;
+  startBalance?: number;
+  startDate?: string;
   currency: Currency;
   tags: string[];
   createdAt: string;
@@ -75,7 +77,10 @@ export interface NetWorthAccount {
 export type NetWorthAccountFormData = Omit<
   NetWorthAccount,
   "_id" | "createdAt" | "updatedAt" | "transactions"
->;
+> & {
+  startBalance: number;
+  startDate: string;
+};
 
 export const PURPOSE_COLORS: Record<AccountPurpose, string> = {
   Savings:

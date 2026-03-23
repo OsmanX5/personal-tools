@@ -83,6 +83,8 @@ The current UI is a fixed-height dashboard layout designed to fit inside the app
 | `description`  | String        | no       | —          | Optional description (trimmed)                                               |
 | `status`       | Enum          | no       | `"active"` | `"active"` or `"archived"`                                                   |
 | `amount`       | Number        | no       | `0`        | Current balance (updated on each transaction)                                |
+| `startBalance` | Number        | no       | `0`        | Starting balance when the account began                                      |
+| `startDate`    | Date          | no       | `Date.now` | Date when the account started (used for historical trend inclusion)          |
 | `currency`     | Enum          | no       | `"USD"`    | `"USD"` \| `"SAR"` \| `"EUR"`                                                |
 | `tags`         | String[]      | no       | `[]`       | Free-form tags                                                               |
 | `purpose`      | Enum          | yes      | —          | `"Savings"` \| `"Current"` \| `"Investment"` \| `"Other"`                    |
@@ -152,7 +154,7 @@ List all accounts sorted by `createdAt` descending.
 
 Create a new account.
 
-- **Body:** `NetWorthAccountFormData` (name, description, status, amount, currency, tags, purpose, location, liquidity)
+- **Body:** `NetWorthAccountFormData` (name, description, status, amount, startBalance, startDate, currency, tags, purpose, location, liquidity)
 - **Response:** `201` — created `NetWorthAccount`
 
 ### `GET /api/networth/[id]`
@@ -252,6 +254,7 @@ Compact card for each account in the sidebar list. Features:
 - Color-coded left border by purpose (green=Savings, blue=Current, purple=Investment, gray=Other)
 - Highlighted background when selected
 - Shows account name, converted balance, and original currency if different
+- Shows account start metadata (`Since MMM YYYY`)
 - Click to select, double-click to edit
 - Inline button to update value (opens TransactionDialog in update-value mode)
 - "+" button to add a transaction
@@ -265,6 +268,8 @@ Modal dialog for creating or editing an account. Fields:
 - **Account Name** (required text input)
 - **Description** (optional textarea)
 - **Balance + Currency** (number input + currency select)
+- **Account Start Date** (date input)
+- **Account Start Balance** (number input)
 - **Purpose** (segmented toggle: Savings / Current / Investment / Other)
 - **Location** (segmented toggle: Bank / Cash / Investment App / Online outlet / Other)
 - **Liquidity** (segmented toggle: Immediate / Hours / Days / Weeks)
@@ -307,6 +312,7 @@ Right-panel detail view for the selected account:
 - A top summary row that places the balance summary and metadata badges beside the chart to use horizontal space more efficiently
 - Current balance (converted + original if different)
 - Account badges for purpose, location, and currency
+- Account start metadata badges for start date and start balance
 - Balance trend area chart with two period options:
   - **12 months** — monthly reconstructed balance history
   - **30 days** — daily reconstructed balance history
@@ -336,6 +342,7 @@ Right-panel detail view for the selected account:
 | Fixed-height dashboard  | Uses the available shell height without normal page-level scroll  |
 | Recent transactions     | Shows the latest 5 transactions in the account detail panel       |
 | Account metadata        | Purpose, location, liquidity tier, status (active/archived), tags |
+| Start metadata          | Capture account start date and start balance                      |
 | Color-coded accounts    | Visual distinction by purpose in the sidebar                      |
 
 ---

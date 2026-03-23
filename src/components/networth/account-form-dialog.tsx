@@ -31,6 +31,13 @@ import {
 } from "@/lib/networth-types";
 import type { Currency } from "@/lib/networth-types";
 
+function toDateInputValue(dateValue?: string): string {
+  if (!dateValue) return new Date().toISOString().slice(0, 10);
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
+
 interface AccountFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -44,6 +51,8 @@ const defaultFormData: NetWorthAccountFormData = {
   description: "",
   status: "active",
   amount: 0,
+  startBalance: 0,
+  startDate: new Date().toISOString().slice(0, 10),
   currency: "USD",
   tags: [],
   purpose: "Current",
@@ -65,6 +74,10 @@ export function AccountFormDialog({
           description: initialData.description ?? "",
           status: initialData.status,
           amount: initialData.amount,
+          startBalance: initialData.startBalance ?? initialData.amount,
+          startDate: toDateInputValue(
+            initialData.startDate ?? initialData.createdAt,
+          ),
           currency: initialData.currency ?? "USD",
           tags: initialData.tags,
           purpose: initialData.purpose,
@@ -76,7 +89,13 @@ export function AccountFormDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
+    const parsedStartDate = new Date(form.startDate);
+    onSubmit({
+      ...form,
+      startDate: Number.isNaN(parsedStartDate.getTime())
+        ? new Date().toISOString()
+        : parsedStartDate.toISOString(),
+    });
   };
 
   const update = <K extends keyof NetWorthAccountFormData>(
@@ -128,7 +147,13 @@ export function AccountFormDialog({
                 type="number"
                 step="0.01"
                 value={form.amount}
-                onChange={(e) => update("amount", Number(e.target.value))}
+                onChange={(e) => {
+                  const amount = Number(e.target.value);
+                  update("amount", amount);
+                  if (!initialData) {
+                    update("startBalance", amount);
+                  }
+                }}
                 placeholder="0.00"
               />
             </div>
@@ -149,6 +174,31 @@ export function AccountFormDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Start Date + Start Balance */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="startDate">Account Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={form.startDate}
+                onChange={(e) => update("startDate", e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="startBalance">Account Start Balance</Label>
+              <Input
+                id="startBalance"
+                type="number"
+                step="0.01"
+                value={form.startBalance}
+                onChange={(e) => update("startBalance", Number(e.target.value))}
+                placeholder="0.00"
+              />
             </div>
           </div>
 

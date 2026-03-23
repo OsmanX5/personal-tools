@@ -161,6 +161,21 @@ export default function NetWorthClient() {
     }
   };
 
+  const handleDeleteTransaction = async (accountId: string, txId: string) => {
+    try {
+      const res = await fetch(
+        `/api/networth/${accountId}/transactions/${txId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("Failed to delete transaction");
+      const updated = await res.json();
+      updateAccount(updated);
+      toast.success("Transaction deleted");
+    } catch {
+      toast.error("Failed to delete transaction");
+    }
+  };
+
   const handleUpdateValue = async (
     accountId: string,
     newAmount: number,
@@ -552,6 +567,7 @@ export default function NetWorthClient() {
                         setTxMode("update-value");
                         setTxDialogOpen(true);
                       }}
+                      onDeleteTransaction={handleDeleteTransaction}
                     />
                   </motion.div>
                 ) : (

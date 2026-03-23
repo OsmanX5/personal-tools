@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Tooltip,
   ResponsiveContainer,
@@ -142,7 +142,7 @@ export function NetWorthSummary({
 
         if (txs.length === 0) {
           // No transactions — use current amount if account existed
-          const created = new Date(account.createdAt);
+          const created = new Date(account.startDate ?? account.createdAt);
           if (created <= endOfMonth) {
             monthTotal += convertAmount(
               account.amount,
@@ -162,7 +162,7 @@ export function NetWorthSummary({
         const amountAtMonth = account.amount - sumAfter;
 
         // Only include if account existed by then
-        const created = new Date(account.createdAt);
+        const created = new Date(account.startDate ?? account.createdAt);
         if (created <= endOfMonth) {
           monthTotal += convertAmount(
             Math.max(0, amountAtMonth),
@@ -210,7 +210,7 @@ export function NetWorthSummary({
           );
 
         if (txs.length === 0) {
-          const created = new Date(account.createdAt);
+          const created = new Date(account.startDate ?? account.createdAt);
           if (created <= endOfDay) {
             dayTotal += convertAmount(
               account.amount,
@@ -226,7 +226,7 @@ export function NetWorthSummary({
         const sumAfter = txsAfter.reduce((s, tx) => s + tx.amount, 0);
         const amountAtDay = account.amount - sumAfter;
 
-        const created = new Date(account.createdAt);
+        const created = new Date(account.startDate ?? account.createdAt);
         if (created <= endOfDay) {
           dayTotal += convertAmount(
             Math.max(0, amountAtDay),
@@ -239,6 +239,55 @@ export function NetWorthSummary({
 
       return { month: label, value: Math.round(dayTotal * 100) / 100 };
     });
+  }, [accounts, displayCurrency, exchangeRates]);
+
+  const periodChanges = useMemo(() => {
+    const getNetWorthAt = (endOfDay: Date) => {
+      let t = 0;
+      for (const account of accounts) {
+        const created = new Date(account.startDate ?? account.createdAt);
+        if (created > endOfDay) continue;
+        const txs = account.transactions
+          .slice()
+          .sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+          );
+        if (txs.length === 0) {
+          t += convertAmount(
+            account.amount,
+            account.currency ?? "USD",
+            displayCurrency,
+            exchangeRates,
+          );
+          continue;
+        }
+        const sumAfter = txs
+          .filter((tx) => new Date(tx.date) > endOfDay)
+          .reduce((s, tx) => s + tx.amount, 0);
+        t += convertAmount(
+          Math.max(0, account.amount - sumAfter),
+          account.currency ?? "USD",
+          displayCurrency,
+          exchangeRates,
+        );
+      }
+      return t;
+    };
+    const now = new Date();
+    const eod = (daysAgo: number) =>
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - daysAgo,
+        23,
+        59,
+        59,
+      );
+    return [
+      { label: "1D", past: getNetWorthAt(eod(1)) },
+      { label: "1W", past: getNetWorthAt(eod(7)) },
+      { label: "1M", past: getNetWorthAt(eod(30)) },
+    ];
   }, [accounts, displayCurrency, exchangeRates]);
 
   return (
@@ -329,29 +378,69 @@ export function NetWorthSummary({
         }
       >
         <Card className="flex min-h-0 flex-1 flex-row">
-          <CardHeader className="shrink-0 pb-2 pt-3 px-4">
-            <div>
-              <CardTitle className="text-sm font-semibold text-muted-foreground">
-                Net Worth
-              </CardTitle>
-              <motion.p
-                className="text-2xl font-bold"
-                key={`${view}-${trendPeriod}-${breakdownGroup}-${displayCurrency}-${Math.round(total)}`}
-                initial={shouldReduceMotion ? undefined : { opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={
-                  shouldReduceMotion
-                    ? { duration: 0 }
-                    : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
-                }
-              >
-                {hideValues
-                  ? "****"
-                  : `${symbol}${total.toLocaleString(undefined, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}`}
-              </motion.p>
+          <CardHeader className="w-52 shrink-0 justify-center gap-0 pb-3 pt-3 px-5">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+              Net Worth
+            </p>
+            <motion.p
+              className="text-3xl font-extrabold tracking-tight"
+              key={`${view}-${trendPeriod}-${breakdownGroup}-${displayCurrency}-${Math.round(total)}`}
+              initial={shouldReduceMotion ? undefined : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
+              }
+            >
+              {hideValues
+                ? "****"
+                : `${symbol}${total.toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}`}
+            </motion.p>
+            <div className="mt-3 flex flex-col gap-1.5 border-t pt-3">
+              {periodChanges.map(({ label, past }) => {
+                const change = total - past;
+                const pct = past > 0 ? (change / past) * 100 : null;
+                const isPos = change >= 0;
+                const fmtAmt = (v: number) => {
+                  const abs = Math.abs(v);
+                  const str =
+                    abs >= 1_000_000
+                      ? `${symbol}${(abs / 1_000_000).toFixed(1)}M`
+                      : abs >= 1000
+                        ? `${symbol}${(abs / 1000).toFixed(1)}k`
+                        : `${symbol}${abs.toFixed(0)}`;
+                  return `${v >= 0 ? "+" : "-"}${str}`;
+                };
+                return (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {label}
+                    </span>
+                    {hideValues ? (
+                      <span className="text-xs font-semibold">****</span>
+                    ) : (
+                      <span
+                        className={`text-xs font-semibold tabular-nums ${isPos ? "text-green-600" : "text-red-500"}`}
+                      >
+                        {fmtAmt(change)}
+                        {pct !== null && (
+                          <span className="ml-1 font-normal opacity-70">
+                            ({pct >= 0 ? "+" : ""}
+                            {pct.toFixed(1)}%)
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 px-4 pb-3">
