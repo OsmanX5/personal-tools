@@ -13,6 +13,7 @@ import { BudgetOverview } from "@/components/budget/budget-overview";
 import { BudgetFormDialog } from "@/components/budget/budget-form-dialog";
 import { PlansList } from "@/components/budget/plans-list";
 import { PlanFormDialog } from "@/components/budget/plan-form-dialog";
+import { RecurringScopeDialog } from "@/components/budget/recurring-scope-dialog";
 import type {
   Expense,
   ExpenseFormData,
@@ -21,6 +22,7 @@ import type {
   FuturePlan,
   FuturePlanFormData,
   ExpenseCategory,
+  EditScope,
 } from "@/lib/budget-types";
 import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
 import type { Currency, ExchangeRates } from "@/lib/networth-types";
@@ -51,6 +53,17 @@ export default function BudgetClient() {
   // Expense dialog
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Recurring scope dialog
+  const [scopeDialogOpen, setScopeDialogOpen] = useState(false);
+  const [scopeDialogAction, setScopeDialogAction] = useState<
+    "edit" | "delete" | "stop"
+  >("edit");
+  const [pendingExpenseData, setPendingExpenseData] =
+    useState<ExpenseFormData | null>(null);
+  const [scopeTargetExpense, setScopeTargetExpense] = useState<Expense | null>(
+    null,
+  );
 
   // Budget dialog
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
@@ -180,7 +193,28 @@ export default function BudgetClient() {
 
   // ── Expense CRUD ──────────────────────────────────────────────────
 
+  const refreshExpenses = useCallback(async () => {
+    const prevM = month === 1 ? 12 : month - 1;
+    const prevY = month === 1 ? year - 1 : year;
+    const [exp, prev] = await Promise.all([
+      fetchExpenses(month, year),
+      fetchExpenses(prevM, prevY),
+    ]);
+    setExpenses(exp);
+    setPrevExpenses(prev);
+  }, [month, year, fetchExpenses]);
+
   const handleExpenseSubmit = async (data: ExpenseFormData) => {
+    // If editing a recurring occurrence, defer to scope dialog
+    if (editingExpense?.recurringMeta) {
+      setExpenseDialogOpen(false);
+      setPendingExpenseData(data);
+      setScopeTargetExpense(editingExpense);
+      setScopeDialogAction("edit");
+      setScopeDialogOpen(true);
+      return;
+    }
+
     setSaving(true);
     try {
       if (editingExpense) {
@@ -215,16 +249,106 @@ export default function BudgetClient() {
     }
   };
 
-  const handleExpenseDelete = async (id: string) => {
+  const handleExpenseDelete = (expense: Expense) => {
+    if (expense.recurringMeta) {
+      // Show scope dialog for recurring instances
+      setScopeTargetExpense(expense);
+      setScopeDialogAction("delete");
+      setScopeDialogOpen(true);
+      return;
+    }
+    // Non-recurring: direct delete
+    void (async () => {
+      try {
+        const res = await fetch(`/api/budget/expenses/${expense._id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) throw new Error("Failed to delete");
+        setExpenses((prev) => prev.filter((e) => e._id !== expense._id));
+        toast.success("Expense deleted");
+      } catch {
+        toast.error("Failed to delete expense");
+      }
+    })();
+  };
+
+  const handleStopRecurring = (expense: Expense) => {
+    setScopeTargetExpense(expense);
+    setScopeDialogAction("stop");
+    setScopeDialogOpen(true);
+  };
+
+  const handleScopeSelected = async (scope: EditScope) => {
+    setScopeDialogOpen(false);
+    if (!scopeTargetExpense?.recurringMeta) return;
+
+    const { templateId, occurrenceDate } = scopeTargetExpense.recurringMeta;
+
+    setSaving(true);
     try {
-      const res = await fetch(`/api/budget/expenses/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete");
-      setExpenses((prev) => prev.filter((e) => e._id !== id));
-      toast.success("Expense deleted");
+      if (scopeDialogAction === "edit") {
+        const res = await fetch("/api/budget/expenses/recurring", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            scope === "single"
+              ? {
+                  action: "edit-single",
+                  templateId,
+                  occurrenceDate,
+                  data: pendingExpenseData,
+                }
+              : {
+                  action: "edit-future",
+                  templateId,
+                  fromDate: occurrenceDate,
+                  data: pendingExpenseData,
+                },
+          ),
+        });
+        if (!res.ok) throw new Error();
+        toast.success(
+          scope === "single"
+            ? "Occurrence updated"
+            : "All future occurrences updated",
+        );
+      } else if (scopeDialogAction === "delete") {
+        const res = await fetch("/api/budget/expenses/recurring", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            scope === "single"
+              ? { action: "skip-single", templateId, occurrenceDate }
+              : { action: "stop", templateId, fromDate: occurrenceDate },
+          ),
+        });
+        if (!res.ok) throw new Error();
+        toast.success(
+          scope === "single"
+            ? "Occurrence deleted"
+            : "Recurring series stopped",
+        );
+      } else if (scopeDialogAction === "stop") {
+        const res = await fetch("/api/budget/expenses/recurring", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "stop",
+            templateId,
+            fromDate: occurrenceDate,
+          }),
+        });
+        if (!res.ok) throw new Error();
+        toast.success("Recurring expense stopped");
+      }
     } catch {
-      toast.error("Failed to delete expense");
+      toast.error("Operation failed");
+    } finally {
+      setSaving(false);
+      setEditingExpense(null);
+      setPendingExpenseData(null);
+      setScopeTargetExpense(null);
+      await refreshExpenses();
     }
   };
 
@@ -479,6 +603,7 @@ export default function BudgetClient() {
                     setExpenseDialogOpen(true);
                   }}
                   onDelete={handleExpenseDelete}
+                  onStopRecurring={handleStopRecurring}
                   onAdd={() => {
                     setEditingExpense(null);
                     setExpenseDialogOpen(true);
@@ -559,6 +684,17 @@ export default function BudgetClient() {
         loading={saving}
         accounts={accounts}
         key={editingExpense?._id ?? "new-expense"}
+      />
+
+      <RecurringScopeDialog
+        open={scopeDialogOpen}
+        action={scopeDialogAction}
+        onSelect={handleScopeSelected}
+        onCancel={() => {
+          setScopeDialogOpen(false);
+          setScopeTargetExpense(null);
+          setPendingExpenseData(null);
+        }}
       />
 
       <BudgetFormDialog

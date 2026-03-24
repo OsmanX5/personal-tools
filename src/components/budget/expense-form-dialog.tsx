@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Repeat } from "lucide-react";
 import type { Expense, ExpenseFormData } from "@/lib/budget-types";
 import { EXPENSE_CATEGORIES, RECURRING_FREQUENCIES } from "@/lib/budget-types";
 import { CURRENCIES, CURRENCY_SYMBOLS } from "@/lib/networth-types";
@@ -90,6 +91,16 @@ export function ExpenseFormDialog({
             {initialData ? "Edit Expense" : "Add Expense"}
           </DialogTitle>
         </DialogHeader>
+        {/* Info note for recurring occurrences */}
+        {initialData?.recurringMeta && (
+          <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+            <Repeat className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              This is a recurring expense. You&apos;ll choose whether to update
+              only this occurrence or all future ones after saving.
+            </span>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
           {/* Amount + Currency */}
           <div className="grid grid-cols-3 gap-3">

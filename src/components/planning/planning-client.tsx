@@ -220,7 +220,14 @@ export default function PlanningClient() {
   // ── Build income entry rows (merge persisted + virtual) ───────────
 
   const entryRows: IncomeEntryRow[] = streams
-    .filter((s) => s.isActive)
+    .filter((s) => {
+      if (!s.isActive) return false;
+      // One-time streams only appear in their designated month
+      if ((s.recurrence ?? "recurring") === "one-time") {
+        return s.oneTimeMonth === incomeMonth && s.oneTimeYear === incomeYear;
+      }
+      return true;
+    })
     .map((s) => {
       const existing = entries.find((e) => e.streamId === s._id);
       if (existing) {

@@ -100,11 +100,26 @@ export interface Expense {
   recurring: boolean;
   recurringFrequency?: RecurringFrequency;
   withdrawAccountId?: string;
+  // Recurring series fields
+  recurringParentId?: string;
+  recurringEndDate?: string;
+  skipped?: boolean;
+  // Runtime-only metadata injected by the API for virtual recurring instances
+  recurringMeta?: {
+    isVirtual: boolean; // true = synthesized, not a real DB doc
+    templateId: string; // _id of the recurring template
+    occurrenceDate: string; // ISO date string of this specific occurrence
+  };
   createdAt: string;
   updatedAt: string;
 }
 
-export type ExpenseFormData = Omit<Expense, "_id" | "createdAt" | "updatedAt">;
+export type EditScope = "single" | "future";
+
+export type ExpenseFormData = Omit<
+  Expense,
+  "_id" | "createdAt" | "updatedAt" | "recurringMeta"
+>;
 
 // ── Category Budget ──────────────────────────────────────────────────
 

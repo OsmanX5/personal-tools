@@ -9,6 +9,10 @@ export interface IExpense extends Document {
   recurring: boolean;
   recurringFrequency?: string;
   withdrawAccountId?: string;
+  // Recurring series fields
+  recurringParentId?: string; // set on override/skip docs — references the template _id
+  recurringEndDate?: Date; // set on templates — stop generating occurrences after this date
+  skipped?: boolean; // set on skip docs — marks an occurrence as deliberately skipped
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,12 +66,25 @@ const ExpenseSchema = new Schema<IExpense>(
     withdrawAccountId: {
       type: String,
     },
+    // Recurring series fields
+    recurringParentId: {
+      type: String,
+      index: true,
+    },
+    recurringEndDate: {
+      type: Date,
+    },
+    skipped: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );
 
 ExpenseSchema.index({ date: -1 });
 ExpenseSchema.index({ category: 1, date: -1 });
+ExpenseSchema.index({ recurringParentId: 1, date: 1 });
 
 const Expense: Model<IExpense> =
   mongoose.models.Expense || mongoose.model<IExpense>("Expense", ExpenseSchema);

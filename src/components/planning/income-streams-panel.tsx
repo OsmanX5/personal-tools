@@ -201,6 +201,22 @@ function IncomeEntryItem({
                 Default
               </Badge>
             )}
+            {stream && (stream.recurrence ?? "recurring") === "variable" && (
+              <Badge
+                variant="outline"
+                className="text-[10px] border-violet-200 text-violet-700 dark:border-violet-900 dark:text-violet-300"
+              >
+                Variable
+              </Badge>
+            )}
+            {stream && (stream.recurrence ?? "recurring") === "one-time" && (
+              <Badge
+                variant="outline"
+                className="text-[10px] border-amber-200 text-amber-700 dark:border-amber-900 dark:text-amber-300"
+              >
+                One-time
+              </Badge>
+            )}
           </div>
         </div>
       </div>

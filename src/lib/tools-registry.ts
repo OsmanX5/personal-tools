@@ -51,6 +51,14 @@ export const tools: ToolConfig[] = [
     status: "active",
   },
   {
+    name: "Financial Planning",
+    slug: "planning",
+    description:
+      "Track income, monitor emergency fund, and project your financial future.",
+    icon: TrendingUp,
+    status: "active",
+  },
+  {
     name: "Job Applications",
     slug: "jobs",
     description:
@@ -79,14 +87,6 @@ export const tools: ToolConfig[] = [
     description:
       "Organize your learning — track courses, books, and tutorials with progress and skill tags.",
     icon: GraduationCap,
-    status: "active",
-  },
-  {
-    name: "Financial Planning",
-    slug: "planning",
-    description:
-      "Track income, monitor emergency fund, and project your financial future.",
-    icon: TrendingUp,
     status: "active",
   },
 ];

@@ -3,10 +3,13 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IIncomeStream extends Document {
   name: string;
   type: string;
+  recurrence: string;
   defaultAmount: number;
   currency: string;
   isActive: boolean;
   startDate?: Date;
+  oneTimeMonth?: number;
+  oneTimeYear?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,12 +36,25 @@ const IncomeStreamSchema = new Schema<IIncomeStream>(
       enum: ["USD", "SAR", "EUR"],
       default: "USD",
     },
+    recurrence: {
+      type: String,
+      enum: ["recurring", "variable", "one-time"],
+      default: "recurring",
+    },
     isActive: {
       type: Boolean,
       default: true,
     },
     startDate: {
       type: Date,
+    },
+    oneTimeMonth: {
+      type: Number,
+      min: 1,
+      max: 12,
+    },
+    oneTimeYear: {
+      type: Number,
     },
   },
   { timestamps: true },

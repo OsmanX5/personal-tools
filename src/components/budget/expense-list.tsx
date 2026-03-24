@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Repeat, Plus } from "lucide-react";
+import { Pencil, Trash2, Repeat, Plus, StopCircle } from "lucide-react";
 import type { Expense, ExpenseCategory } from "@/lib/budget-types";
 import {
   EXPENSE_CATEGORIES,
@@ -28,7 +28,8 @@ interface ExpenseListProps {
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
   onEdit: (expense: Expense) => void;
-  onDelete: (id: string) => void;
+  onDelete: (expense: Expense) => void;
+  onStopRecurring?: (expense: Expense) => void;
   onAdd?: () => void;
 }
 
@@ -38,12 +39,13 @@ export function ExpenseList({
   exchangeRates,
   onEdit,
   onDelete,
+  onStopRecurring,
   onAdd,
 }: ExpenseListProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
-  const [filterCategory, setFilterCategory] = useState<
-    ExpenseCategory | "All"
-  >("All");
+  const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "All">(
+    "All",
+  );
 
   const filtered = useMemo(
     () =>
@@ -62,22 +64,22 @@ export function ExpenseList({
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select
-            value={filterCategory}
-            onValueChange={(v) =>
-              setFilterCategory(v as ExpenseCategory | "All")
-            }
-          >
-            <SelectTrigger className="h-7 w-[160px] text-xs">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All categories</SelectItem>
-              {EXPENSE_CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
+              value={filterCategory}
+              onValueChange={(v) =>
+                setFilterCategory(v as ExpenseCategory | "All")
+              }
+            >
+              <SelectTrigger className="h-7 w-[160px] text-xs">
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All categories</SelectItem>
+                {EXPENSE_CATEGORIES.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             {onAdd && (
               <Button size="sm" className="h-7 text-xs" onClick={onAdd}>
@@ -119,7 +121,15 @@ export function ExpenseList({
                         <span className="text-sm font-medium truncate">
                           {expense.description || expense.category}
                         </span>
-                        {expense.recurring && (
+                        {expense.recurringMeta ? (
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 gap-1 text-[10px] px-1.5 py-0 border-blue-400 text-blue-600 dark:border-blue-500 dark:text-blue-400"
+                          >
+                            <Repeat className="h-2.5 w-2.5" />
+                            {expense.recurringFrequency} • auto
+                          </Badge>
+                        ) : expense.recurring ? (
                           <Badge
                             variant="outline"
                             className="shrink-0 gap-1 text-[10px] px-1.5 py-0"
@@ -127,7 +137,7 @@ export function ExpenseList({
                             <Repeat className="h-2.5 w-2.5" />
                             {expense.recurringFrequency}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Badge
@@ -153,15 +163,29 @@ export function ExpenseList({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
+                        title="Edit"
                         onClick={() => onEdit(expense)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
+                      {/* Stop recurring button — shown only for recurring instances */}
+                      {expense.recurringMeta && onStopRecurring && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-amber-500 hover:text-amber-600"
+                          title="Stop recurring from this occurrence"
+                          onClick={() => onStopRecurring(expense)}
+                        >
+                          <StopCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => onDelete(expense._id)}
+                        title="Delete"
+                        onClick={() => onDelete(expense)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>

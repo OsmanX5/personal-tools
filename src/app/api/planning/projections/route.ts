@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
   });
   let projectedMonthlyIncome = 0;
   for (const s of activeStreams) {
+    // One-time streams don't contribute to monthly projections
+    if ((s.recurrence ?? "recurring") === "one-time") continue;
     projectedMonthlyIncome += convert(s.defaultAmount, s.currency, dc, rates);
   }
 

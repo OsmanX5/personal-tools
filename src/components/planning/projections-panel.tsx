@@ -4,7 +4,13 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, ShieldCheck } from "lucide-react";
+import {
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  ShieldCheck,
+  Target,
+} from "lucide-react";
 import type { ProjectionsData, IncomeStreamType } from "@/lib/planning-types";
 import { HORIZON_LABELS, INCOME_STREAM_TYPES } from "@/lib/planning-types";
 import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
@@ -27,6 +33,14 @@ function fmt(value: number, symbol: string) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })}`;
+}
+
+function formatDuration(totalMonths: number): string {
+  const years = Math.floor(totalMonths / 12);
+  const months = Math.round(totalMonths % 12);
+  if (years === 0) return `${months} month${months !== 1 ? "s" : ""}`;
+  if (months === 0) return `${years} y`;
+  return `${years} y ${months} month${months !== 1 ? "s" : ""}`;
 }
 
 export function ProjectionsPanel({
@@ -144,6 +158,61 @@ export function ProjectionsPanel({
             );
           })}
         </div>
+
+        {/* Milestone: time to $1M or time to $0 */}
+        {projections.length > 0 &&
+          projections[0].monthlyContribution !== 0 &&
+          (() => {
+            const monthly = projections[0].monthlyContribution;
+            if (monthly > 0) {
+              if (currentNetWorth >= 1_000_000) return null;
+              const monthsTo = (1_000_000 - currentNetWorth) / monthly;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={getPlanningEnterTransition(0.25)}
+                  className="rounded-lg border bg-muted/30 p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-amber-500" />
+                    <p className="text-sm">
+                      Reach{" "}
+                      <span className="font-semibold">
+                        {fmt(1_000_000, symbol)}
+                      </span>{" "}
+                      in{" "}
+                      <span className="font-semibold">
+                        {formatDuration(monthsTo)}
+                      </span>
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            } else {
+              if (currentNetWorth <= 0) return null;
+              const monthsTo = currentNetWorth / Math.abs(monthly);
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={getPlanningEnterTransition(0.25)}
+                  className="rounded-lg border border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/30 p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      Net worth reaches{" "}
+                      <span className="font-semibold">{fmt(0, symbol)}</span> in{" "}
+                      <span className="font-semibold">
+                        {formatDuration(monthsTo)}
+                      </span>
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            }
+          })()}
 
         {/* Emergency fund projection */}
         {monthsToEmergencyFundFull !== null && (

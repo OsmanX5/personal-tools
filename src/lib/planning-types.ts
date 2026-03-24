@@ -19,14 +19,27 @@ export const INCOME_STREAM_TYPE_COLORS: Record<IncomeStreamType, string> = {
     "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-950/40 dark:text-gray-400 dark:border-gray-800",
 };
 
+export type IncomeRecurrence = "recurring" | "variable" | "one-time";
+
+export const INCOME_RECURRENCES: IncomeRecurrence[] = [
+  "recurring",
+  "variable",
+  "one-time",
+];
+
 export interface IncomeStream {
   _id: string;
   name: string;
   type: IncomeStreamType;
+  recurrence: IncomeRecurrence;
   defaultAmount: number;
   currency: Currency;
   isActive: boolean;
   startDate?: string;
+  /** Required when recurrence is "one-time" */
+  oneTimeMonth?: number;
+  /** Required when recurrence is "one-time" */
+  oneTimeYear?: number;
   createdAt: string;
   updatedAt: string;
 }
