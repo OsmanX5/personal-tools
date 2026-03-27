@@ -7,15 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Wallet, Pencil, Trash2, Plus, RefreshCw } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import { Chart } from "@/components/ui/chart";
 import {
   TRANSACTION_ICON,
   convertAmount,
@@ -506,65 +498,21 @@ export function TransactionDetailPanel({
                   </div>
                 </div>
                 <div className="h-36 shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={
-                        trendPeriod === "12m" ? historyData12m : historyData30d
-                      }
-                      margin={{ top: 4, right: 8, bottom: 0, left: 4 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id={`acctGrad-${account._id}`}
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#22c55e"
-                            stopOpacity={0.3}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#22c55e"
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        className="stroke-muted"
-                      />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 9 }}
-                        className="fill-muted-foreground"
-                      />
-                      <YAxis
-                        tick={{ fontSize: 9 }}
-                        className="fill-muted-foreground"
-                        width={40}
-                        tickFormatter={(v) =>
-                          v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
-                        }
-                      />
-                      <Tooltip
-                        formatter={(value) => [
-                          `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                          "Balance",
-                        ]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#22c55e"
-                        strokeWidth={2}
-                        fill={`url(#acctGrad-${account._id})`}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <Chart
+                    data={
+                      trendPeriod === "12m" ? historyData12m : historyData30d
+                    }
+                    xKey="month"
+                    dataKey="value"
+                    color="#22c55e"
+                    tickFontSize={9}
+                    margin={{ top: 4, right: 8, bottom: 0, left: 4 }}
+                    yWidth={40}
+                    tooltipFormatter={(value) => [
+                      `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      "Balance",
+                    ]}
+                  />
                 </div>
               </motion.div>
             </motion.div>

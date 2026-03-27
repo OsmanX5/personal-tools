@@ -45,15 +45,15 @@ const STATUS_ICONS: Record<CourseStatus, React.ReactNode> = {
 
 const STAT_CARD_COLORS: Record<CourseStatus, string> = {
   Wishlist:
-    "border-blue-200 text-blue-700 dark:border-blue-800 dark:text-blue-400",
+    "border-blue-200 text-blue-700 dark:border-blue-600/60 dark:text-blue-300",
   "In Progress":
-    "border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400",
+    "border-amber-200 text-amber-700 dark:border-amber-600/60 dark:text-amber-300",
   Paused:
-    "border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400",
+    "border-slate-200 text-slate-600 dark:border-slate-600/60 dark:text-slate-300",
   Completed:
-    "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400",
+    "border-emerald-200 text-emerald-700 dark:border-emerald-600/60 dark:text-emerald-300",
   Dropped:
-    "border-rose-200 text-rose-700 dark:border-rose-800 dark:text-rose-400",
+    "border-rose-200 text-rose-700 dark:border-rose-600/60 dark:text-rose-300",
 };
 
 export default function CoursesClient() {
@@ -404,7 +404,7 @@ export default function CoursesClient() {
         <div className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <Star className="h-4 w-4 text-blue-600 dark:text-blue-300" />
               <h2 className="text-sm font-semibold">Wishlist</h2>
               <Badge variant="secondary" className="text-xs">
                 {groupedByStatus["Wishlist"].length}
@@ -454,7 +454,7 @@ export default function CoursesClient() {
                   animate="visible"
                   exit="exit"
                   onClick={() => handleEdit(course)}
-                  className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-50/50 px-3 py-2 text-left transition-all hover:shadow-sm dark:border-blue-900 dark:bg-blue-950/30"
+                  className="flex flex-col gap-1 rounded-lg border border-blue-200 bg-blue-50/50 px-3 py-2 text-left transition-all hover:shadow-sm dark:border-blue-700/50 dark:bg-blue-900/20"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="truncate text-sm font-medium">
@@ -520,15 +520,15 @@ export default function CoursesClient() {
                     <div
                       className={`mb-3 flex items-center gap-2 rounded-md px-3 py-1.5 ${STATUS_HEADER_COLORS[status]}`}
                     >
-                      <span className="text-white/80">
+                      <span className="text-white/80 dark:text-foreground/60">
                         {STATUS_ICONS[status]}
                       </span>
-                      <h2 className="text-sm font-semibold text-white">
+                      <h2 className="text-sm font-semibold text-white dark:text-foreground">
                         {status}
                       </h2>
                       <Badge
                         variant="secondary"
-                        className="bg-white/20 text-xs text-white hover:bg-white/30"
+                        className="bg-white/20 dark:bg-foreground/10 text-xs text-white dark:text-foreground hover:bg-white/30 dark:hover:bg-foreground/15"
                       >
                         {group.length}
                       </Badge>

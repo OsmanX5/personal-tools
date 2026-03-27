@@ -194,7 +194,7 @@ export function HabitCard({
           <Button
             variant="outline"
             size="sm"
-            className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950/40"
+            className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-500 dark:text-green-300 dark:hover:bg-green-900/25"
             onClick={() => onUnlog(habit.todayLog!)}
           >
             <Check className="mr-1.5 h-3.5 w-3.5" />

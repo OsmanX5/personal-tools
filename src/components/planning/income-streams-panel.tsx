@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Chart } from "@/components/ui/chart";
 import {
   Plus,
   ChevronLeft,
@@ -14,7 +16,11 @@ import {
   Trash2,
   Check,
 } from "lucide-react";
-import type { IncomeStream, IncomeEntryRow } from "@/lib/planning-types";
+import type {
+  IncomeStream,
+  IncomeEntryRow,
+  IncomeHistoryPoint,
+} from "@/lib/planning-types";
 import { INCOME_STREAM_TYPE_COLORS } from "@/lib/planning-types";
 import { CURRENCY_SYMBOLS } from "@/lib/networth-types";
 import type { Currency, ExchangeRates } from "@/lib/networth-types";
@@ -31,6 +37,7 @@ interface IncomeStreamsPanelProps {
   year: number;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  incomeHistory: IncomeHistoryPoint[];
   onMonthChange: (dir: -1 | 1) => void;
   onAddStream: () => void;
   onEditStream: (stream: IncomeStream) => void;
@@ -51,6 +58,7 @@ export function IncomeStreamsPanel({
   year,
   displayCurrency,
   exchangeRates,
+  incomeHistory,
   onMonthChange,
   onAddStream,
   onEditStream,
@@ -131,6 +139,17 @@ export function IncomeStreamsPanel({
             />
           ))}
         </AnimatePresence>
+
+        {/* Income History Chart */}
+        {incomeHistory.length >= 2 && (
+          <>
+            <Separator className="my-3" />
+            <IncomeHistoryChart
+              data={incomeHistory}
+              displayCurrency={displayCurrency}
+            />
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -204,7 +223,7 @@ function IncomeEntryItem({
             {stream && (stream.recurrence ?? "recurring") === "variable" && (
               <Badge
                 variant="outline"
-                className="text-[10px] border-violet-200 text-violet-700 dark:border-violet-900 dark:text-violet-300"
+                className="text-[10px] border-violet-200 text-violet-700 dark:border-violet-700/50 dark:text-violet-200"
               >
                 Variable
               </Badge>
@@ -212,7 +231,7 @@ function IncomeEntryItem({
             {stream && (stream.recurrence ?? "recurring") === "one-time" && (
               <Badge
                 variant="outline"
-                className="text-[10px] border-amber-200 text-amber-700 dark:border-amber-900 dark:text-amber-300"
+                className="text-[10px] border-amber-200 text-amber-700 dark:border-amber-700/50 dark:text-amber-200"
               >
                 One-time
               </Badge>
@@ -283,6 +302,51 @@ function IncomeEntryItem({
             </Button>
           </div>
         )}
+      </div>
+    </motion.div>
+  );
+}
+
+function IncomeHistoryChart({
+  data,
+  displayCurrency,
+}: {
+  data: IncomeHistoryPoint[];
+  displayCurrency: Currency;
+}) {
+  const symbol = CURRENCY_SYMBOLS[displayCurrency];
+
+  const yDomain = useMemo((): [number, number] => {
+    const totals = data.map((d) => d.total);
+    const min = Math.min(...totals);
+    const max = Math.max(...totals);
+    const padding = Math.max((max - min) * 0.15, max * 0.1 || 100);
+    return [Math.max(Math.floor(min - padding), 0), Math.ceil(max + padding)];
+  }, [data]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={getPlanningEnterTransition(0.1)}
+    >
+      <p className="mb-2 text-xs font-medium text-muted-foreground">
+        Monthly Income (last {data.length} months)
+      </p>
+      <div className="h-[180px]">
+        <Chart
+          data={data}
+          xKey="label"
+          dataKey="total"
+          color="var(--chart-1)"
+          height="100%"
+          yDomain={yDomain}
+          yWidth={50}
+          tooltipFormatter={(v) => [
+            `${symbol}${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            "Income",
+          ]}
+        />
       </div>
     </motion.div>
   );

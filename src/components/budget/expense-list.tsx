@@ -124,7 +124,7 @@ export function ExpenseList({
                         {expense.recurringMeta ? (
                           <Badge
                             variant="outline"
-                            className="shrink-0 gap-1 text-[10px] px-1.5 py-0 border-blue-400 text-blue-600 dark:border-blue-500 dark:text-blue-400"
+                            className="shrink-0 gap-1 text-[10px] px-1.5 py-0 border-blue-400 text-blue-600 dark:border-blue-400 dark:text-blue-300"
                           >
                             <Repeat className="h-2.5 w-2.5" />
                             {expense.recurringFrequency} • auto

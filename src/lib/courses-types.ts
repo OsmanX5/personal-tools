@@ -57,28 +57,28 @@ export const COURSE_PRIORITIES: CoursePriority[] = ["Low", "Medium", "High"];
 
 export const STATUS_COLORS: Record<CourseStatus, string> = {
   Wishlist:
-    "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900",
+    "bg-blue-50 border-blue-200 dark:bg-blue-900/25 dark:border-blue-700/50",
   "In Progress":
-    "bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900",
+    "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25",
   Paused:
-    "bg-slate-50 border-slate-200 dark:bg-slate-950/40 dark:border-slate-900",
+    "bg-slate-50 border-slate-200 dark:bg-slate-900/25 dark:border-slate-700/50",
   Completed:
-    "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900",
+    "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/25 dark:border-emerald-700/50",
   Dropped:
-    "bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-900",
+    "bg-rose-50 border-rose-200 dark:bg-rose-900/25 dark:border-rose-700/50",
 };
 
 export const STATUS_HEADER_COLORS: Record<CourseStatus, string> = {
-  Wishlist: "bg-blue-600 dark:bg-blue-800",
-  "In Progress": "bg-amber-500 dark:bg-amber-700",
-  Paused: "bg-slate-500 dark:bg-slate-700",
-  Completed: "bg-emerald-600 dark:bg-emerald-800",
-  Dropped: "bg-rose-600 dark:bg-rose-800",
+  Wishlist: "bg-blue-600 dark:bg-blue-500/15",
+  "In Progress": "bg-amber-500 dark:bg-amber-500/12",
+  Paused: "bg-slate-500 dark:bg-slate-400/15",
+  Completed: "bg-emerald-600 dark:bg-emerald-500/15",
+  Dropped: "bg-rose-600 dark:bg-rose-500/15",
 };
 
 export const PRIORITY_COLORS: Record<CoursePriority, string> = {
-  Low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  Low: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200",
   Medium:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-  High: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
+    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200",
+  High: "bg-rose-100 text-rose-700 dark:bg-rose-900/35 dark:text-rose-200",
 };

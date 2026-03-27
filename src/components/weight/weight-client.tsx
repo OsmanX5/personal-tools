@@ -251,9 +251,9 @@ export default function WeightClient() {
   const bmiCategory = latestEntry ? getBmiCategory(latestEntry.bmi) : null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Weight Tracker</h1>
@@ -300,12 +300,12 @@ export default function WeightClient() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Cards — full-width row, always on top */}
+      <div className="grid shrink-0 grid-cols-2 gap-4 sm:grid-cols-4">
         {/* Current Weight */}
         <Card>
           <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Scale className="h-8 w-8 text-muted-foreground" />
+            <Scale className="h-8 w-8 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Current Weight</p>
               {latestEntry ? (
@@ -322,8 +322,8 @@ export default function WeightClient() {
         {/* Height */}
         <Card>
           <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Ruler className="h-8 w-8 text-muted-foreground" />
-            <div className="flex-1">
+            <Ruler className="h-8 w-8 shrink-0 text-muted-foreground" />
+            <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground">Height</p>
               {editingHeight ? (
                 <div className="flex items-center gap-1.5">
@@ -333,7 +333,7 @@ export default function WeightClient() {
                     min="1"
                     value={heightInput}
                     onChange={(e) => setHeightInput(e.target.value)}
-                    className="h-8 w-24"
+                    className="h-8 w-20"
                     placeholder="175"
                     autoFocus
                     onKeyDown={(e) => {
@@ -378,7 +378,7 @@ export default function WeightClient() {
         {/* Current BMI */}
         <Card>
           <CardContent className="flex items-center gap-3 px-4 py-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-xs font-bold">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-bold">
               BMI
             </div>
             <div>
@@ -405,7 +405,7 @@ export default function WeightClient() {
         {/* Active Goal */}
         <Card>
           <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Target className="h-8 w-8 text-muted-foreground" />
+            <Target className="h-8 w-8 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Active Goal</p>
               {activeGoal ? (
@@ -420,58 +420,71 @@ export default function WeightClient() {
         </Card>
       </div>
 
-      {/* Weight Trend Chart */}
-      <WeightChart entries={entries} goalWeight={activeGoal?.targetWeight} />
-
-      {/* Goals Section */}
-      {goals.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Goals</h2>
-          <div className="grid gap-3">
-            {goals.map((goal) => (
-              <WeightGoalCard
-                key={goal._id}
-                goal={goal}
-                currentWeight={latestEntry?.weight}
-                onEdit={handleGoalEdit}
-                onDelete={handleGoalDelete}
-                onMarkAchieved={(id) => handleGoalStatusChange(id, "Achieved")}
-                onMarkAbandoned={(id) =>
-                  handleGoalStatusChange(id, "Abandoned")
-                }
-                hideValues={hideValues}
-              />
-            ))}
-          </div>
+      {/* Two-column body */}
+      <div className="flex min-h-0 flex-1 gap-4 overflow-hidden flex-col lg:flex-row">
+        {/* LEFT COLUMN: Weight Log */}
+        <div className="flex min-h-0 flex-col overflow-hidden lg:flex-[2]">
+          <h2 className="shrink-0 pb-3 text-lg font-semibold">Weight Log</h2>
+          {entries.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+                <Scale className="mb-2 h-10 w-10 text-muted-foreground" />
+                <p className="text-muted-foreground">No entries yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Click &quot;Log Weight&quot; to add your first entry.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="grid gap-3 pr-1">
+                {entries.map((entry) => (
+                  <WeightEntryCard
+                    key={entry._id}
+                    entry={entry}
+                    onEdit={handleEntryEdit}
+                    onDelete={handleEntryDelete}
+                    hideValues={hideValues}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Entries Section */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Weight Log</h2>
-        {entries.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-              <Scale className="mb-2 h-10 w-10 text-muted-foreground" />
-              <p className="text-muted-foreground">No entries yet</p>
-              <p className="text-sm text-muted-foreground">
-                Click &quot;Log Weight&quot; to add your first entry.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-3">
-            {entries.map((entry) => (
-              <WeightEntryCard
-                key={entry._id}
-                entry={entry}
-                onEdit={handleEntryEdit}
-                onDelete={handleEntryDelete}
-                hideValues={hideValues}
-              />
-            ))}
-          </div>
-        )}
+        {/* RIGHT COLUMN: Chart + Goals */}
+        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:flex-[3]">
+          {/* Weight Trend Chart */}
+          <WeightChart
+            entries={entries}
+            goalWeight={activeGoal?.targetWeight}
+          />
+
+          {/* Goals Section */}
+          {goals.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Goals</h2>
+              <div className="grid gap-3">
+                {goals.map((goal) => (
+                  <WeightGoalCard
+                    key={goal._id}
+                    goal={goal}
+                    currentWeight={latestEntry?.weight}
+                    onEdit={handleGoalEdit}
+                    onDelete={handleGoalDelete}
+                    onMarkAchieved={(id) =>
+                      handleGoalStatusChange(id, "Achieved")
+                    }
+                    onMarkAbandoned={(id) =>
+                      handleGoalStatusChange(id, "Abandoned")
+                    }
+                    hideValues={hideValues}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Entry Form Dialog */}

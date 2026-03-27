@@ -29,17 +29,23 @@ const PURPOSE_COLOR_MAP: Record<string, string> = {
 };
 
 const PURPOSE_SELECTED_MAP: Record<string, string> = {
-  Savings: "bg-green-100 dark:bg-green-950/60",
-  Current: "bg-blue-100 dark:bg-blue-950/60",
-  Investment: "bg-purple-100 dark:bg-purple-950/60",
-  Other: "bg-gray-100 dark:bg-gray-950/60",
+  Savings: "bg-green-100 dark:bg-green-900/30",
+  Current: "bg-blue-100 dark:bg-blue-900/30",
+  Investment: "bg-purple-100 dark:bg-purple-900/30",
+  Other: "bg-gray-100 dark:bg-gray-800/40",
 };
 
 export const TRANSACTION_ICON: Record<string, React.ReactNode> = {
-  Income: <ArrowUpRight className="h-3 w-3 text-green-600" />,
-  Expense: <ArrowDownRight className="h-3 w-3 text-red-600" />,
-  Transfer: <RefreshCw className="h-3 w-3 text-blue-600" />,
-  MarketChange: <TrendingUp className="h-3 w-3 text-purple-600" />,
+  Income: (
+    <ArrowUpRight className="h-3 w-3 text-green-600 dark:text-green-400" />
+  ),
+  Expense: (
+    <ArrowDownRight className="h-3 w-3 text-red-600 dark:text-red-400" />
+  ),
+  Transfer: <RefreshCw className="h-3 w-3 text-blue-600 dark:text-blue-400" />,
+  MarketChange: (
+    <TrendingUp className="h-3 w-3 text-purple-600 dark:text-purple-400" />
+  ),
 };
 
 interface AccountListItemProps {

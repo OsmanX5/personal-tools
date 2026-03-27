@@ -12,11 +12,11 @@ export const INCOME_STREAM_TYPES: IncomeStreamType[] = [
 
 export const INCOME_STREAM_TYPE_COLORS: Record<IncomeStreamType, string> = {
   Salary:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900",
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/25 dark:text-blue-200 dark:border-blue-700/50",
   Freelance:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900",
+    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-700/50",
   Other:
-    "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-950/40 dark:text-gray-400 dark:border-gray-800",
+    "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700/50",
 };
 
 export type IncomeRecurrence = "recurring" | "variable" | "one-time";
@@ -89,6 +89,16 @@ export type IncomeEntryRow =
       isVirtual: false;
     })
   | VirtualIncomeEntry;
+
+// ── Income History (for chart) ───────────────────────────────────────
+
+export interface IncomeHistoryPoint {
+  month: number;
+  year: number;
+  label: string;
+  total: number;
+  [key: string]: unknown;
+}
 
 // ── Emergency Fund ───────────────────────────────────────────────────
 

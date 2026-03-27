@@ -146,8 +146,8 @@ export function ProjectionsPanel({
                     variant="outline"
                     className={`text-[10px] ${
                       isPositive
-                        ? "border-green-200 text-green-700 dark:border-green-900 dark:text-green-300"
-                        : "border-red-200 text-red-700 dark:border-red-900 dark:text-red-300"
+                        ? "border-green-200 text-green-700 dark:border-green-700/50 dark:text-green-200"
+                        : "border-red-200 text-red-700 dark:border-red-700/50 dark:text-red-200"
                     }`}
                   >
                     {isPositive ? "+" : ""}
@@ -197,11 +197,11 @@ export function ProjectionsPanel({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={getPlanningEnterTransition(0.25)}
-                  className="rounded-lg border border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/30 p-3"
+                  className="rounded-lg border border-red-200 bg-red-50/50 dark:border-red-700/50 dark:bg-red-900/20 p-3"
                 >
                   <div className="flex items-center gap-2">
                     <TrendingDown className="h-4 w-4 text-red-500" />
-                    <p className="text-sm text-red-700 dark:text-red-300">
+                    <p className="text-sm text-red-700 dark:text-red-200">
                       Net worth reaches{" "}
                       <span className="font-semibold">{fmt(0, symbol)}</span> in{" "}
                       <span className="font-semibold">
@@ -225,7 +225,7 @@ export function ProjectionsPanel({
             {monthsToEmergencyFundFull === 0 ? (
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-green-500" />
-                <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                <p className="text-sm font-medium text-green-700 dark:text-green-200">
                   Emergency fund is fully funded!
                 </p>
               </div>

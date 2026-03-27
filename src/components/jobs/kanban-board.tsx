@@ -57,8 +57,10 @@ export function KanbanBoard({
           <div
             className={`flex items-center justify-between rounded-t-lg px-3 py-2 ${STATUS_HEADER_COLORS[status]}`}
           >
-            <h2 className="text-sm font-semibold text-white">{status}</h2>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs font-medium text-white">
+            <h2 className="text-sm font-semibold text-white dark:text-foreground">
+              {status}
+            </h2>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 dark:bg-foreground/10 text-xs font-medium text-white dark:text-foreground">
               {columnJobs.length}
             </span>
           </div>

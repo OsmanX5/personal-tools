@@ -84,19 +84,20 @@ export type NetWorthAccountFormData = Omit<
 
 export const PURPOSE_COLORS: Record<AccountPurpose, string> = {
   Savings:
-    "bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-900",
+    "bg-green-50 border-green-200 dark:bg-green-900/25 dark:border-green-700/50",
   Current:
-    "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900",
+    "bg-blue-50 border-blue-200 dark:bg-blue-900/25 dark:border-blue-700/50",
   Investment:
-    "bg-purple-50 border-purple-200 dark:bg-purple-950/40 dark:border-purple-900",
-  Other: "bg-gray-50 border-gray-200 dark:bg-gray-950/40 dark:border-gray-900",
+    "bg-purple-50 border-purple-200 dark:bg-purple-900/25 dark:border-purple-700/50",
+  Other:
+    "bg-gray-50 border-gray-200 dark:bg-gray-800/40 dark:border-gray-700/50",
 };
 
 export const LIQUIDITY_BADGE: Record<AccountLiquidity, string> = {
   Immediate:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200",
   Hours:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  Days: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-  Weeks: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-200",
+  Days: "bg-orange-100 text-orange-800 dark:bg-orange-500/12 dark:text-orange-200",
+  Weeks: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200",
 };

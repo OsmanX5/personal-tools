@@ -48,29 +48,29 @@ export const CATEGORY_COLORS: Record<ExpenseCategory, string> = {
 
 export const CATEGORY_BG_COLORS: Record<ExpenseCategory, string> = {
   "Food & Groceries":
-    "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900",
+    "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/25 dark:text-green-200 dark:border-green-700/50",
   Transport:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900",
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/25 dark:text-blue-200 dark:border-blue-700/50",
   "Rent / Housing":
-    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/12 dark:text-amber-200 dark:border-amber-500/40",
   Utilities:
-    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-900",
+    "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-900/25 dark:text-cyan-200 dark:border-cyan-700/50",
   Entertainment:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900",
+    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-700/50",
   "Health & Fitness":
-    "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-900",
+    "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/25 dark:text-pink-200 dark:border-pink-700/50",
   Education:
-    "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900",
+    "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/25 dark:text-indigo-200 dark:border-indigo-700/50",
   Clothing:
-    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-900",
+    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/12 dark:text-orange-200 dark:border-orange-500/40",
   Subscriptions:
-    "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-950/40 dark:text-lime-300 dark:border-lime-900",
+    "bg-lime-50 text-lime-700 border-lime-200 dark:bg-lime-900/25 dark:text-lime-200 dark:border-lime-700/50",
   "Loaning Friends":
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900",
+    "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/25 dark:text-red-200 dark:border-red-700/50",
   "Family Support":
-    "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-950/40 dark:text-fuchsia-300 dark:border-fuchsia-900",
+    "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/25 dark:text-fuchsia-200 dark:border-fuchsia-700/50",
   Other:
-    "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-950/40 dark:text-gray-400 dark:border-gray-800",
+    "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700/50",
 };
 
 // ── Recurring ────────────────────────────────────────────────────────
@@ -148,19 +148,19 @@ export const PLAN_PRIORITIES: PlanPriority[] = ["High", "Medium", "Low"];
 export const PLAN_STATUSES: PlanStatus[] = ["Active", "Completed", "Cancelled"];
 
 export const PRIORITY_COLORS: Record<PlanPriority, string> = {
-  High: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900",
+  High: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/25 dark:text-red-200 dark:border-red-700/50",
   Medium:
-    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
-  Low: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-900",
+    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/12 dark:text-amber-200 dark:border-amber-500/40",
+  Low: "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/25 dark:text-green-200 dark:border-green-700/50",
 };
 
 export const PLAN_STATUS_COLORS: Record<PlanStatus, string> = {
   Active:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900",
+    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/25 dark:text-blue-200 dark:border-blue-700/50",
   Completed:
-    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
+    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/25 dark:text-emerald-200 dark:border-emerald-700/50",
   Cancelled:
-    "bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-950/40 dark:text-gray-400 dark:border-gray-800",
+    "bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700/50",
 };
 
 export interface FuturePlan {

@@ -4,18 +4,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ToggleGroup } from "@/components/ui/toggle-group";
-import {
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Chart } from "@/components/ui/chart";
 import type {
   NetWorthAccount,
   Currency,
@@ -538,64 +528,18 @@ export function NetWorthSummary({
                       : getNetWorthEnterTransition(0.02)
                   }
                 >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={
-                        trendPeriod === "12m" ? historyData12m : historyData30d
-                      }
-                      margin={{ top: 4, right: 12, bottom: 0, left: 4 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="netWorthGrad"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#3b82f6"
-                            stopOpacity={0.3}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#3b82f6"
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        className="stroke-muted"
-                      />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 10 }}
-                        className="fill-muted-foreground"
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10 }}
-                        className="fill-muted-foreground"
-                        tickFormatter={(v) =>
-                          v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
-                        }
-                      />
-                      <Tooltip
-                        formatter={(value) => [
-                          `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                          "Net Worth",
-                        ]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        fill="url(#netWorthGrad)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <Chart
+                    data={
+                      trendPeriod === "12m" ? historyData12m : historyData30d
+                    }
+                    xKey="month"
+                    dataKey="value"
+                    color="#3b82f6"
+                    tooltipFormatter={(value) => [
+                      `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                      "Net Worth",
+                    ]}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

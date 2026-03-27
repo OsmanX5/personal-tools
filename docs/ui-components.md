@@ -11,6 +11,7 @@ All components live in `src/components/ui/`. They are built on top of [`@base-ui
 | Badge       | `badge.tsx`        | `@base-ui/react`    | `Badge`, `badgeVariants`                                                                                                                                                   |
 | Button      | `button.tsx`       | `@base-ui/react`    | `Button`, `buttonVariants`                                                                                                                                                 |
 | Card        | `card.tsx`         | Native `<div>`      | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter`                                                                            |
+| Chart       | `chart.tsx`        | `recharts`          | `Chart`                                                                                                                                                                    |
 | Dialog      | `dialog.tsx`       | `@base-ui/react`    | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose`, `DialogPortal`, `DialogOverlay`             |
 | Input       | `input.tsx`        | `@base-ui/react`    | `Input`                                                                                                                                                                    |
 | Label       | `label.tsx`        | Native `<label>`    | `Label`                                                                                                                                                                    |
@@ -160,6 +161,79 @@ import {
   <CardContent>...</CardContent>
   <CardFooter>...</CardFooter>
 </Card>;
+```
+
+---
+
+## Chart
+
+**File:** [src/components/ui/chart.tsx](../src/components/ui/chart.tsx)
+
+A generalized chart component built on [Recharts](https://recharts.org). Supports **area** (gradient-filled) and **line** (stroke-only) variants. Accepts extra Recharts children (e.g. `ReferenceLine`) for composition.
+
+### Props
+
+| Prop               | Type                                          | Default                                     | Description                                    |
+| ------------------ | --------------------------------------------- | ------------------------------------------- | ---------------------------------------------- |
+| `data`             | `Record<string, unknown>[]`                   | —                                           | Chart data array (required)                    |
+| `xKey`             | `string`                                      | —                                           | Data key for the X axis (required)             |
+| `dataKey`          | `string`                                      | —                                           | Data key for the Y value (required)            |
+| `variant`          | `"area"` \| `"line"`                          | `"area"`                                    | Chart type                                     |
+| `color`            | `string`                                      | `"#3b82f6"`                                 | Stroke color (and gradient base for area)      |
+| `gradient`         | `boolean`                                     | `true` for area, `false` for line           | Show gradient fill under the area              |
+| `showDots`         | `boolean \| { radius?: number }`              | `false` for area, `true` for line           | Show data-point dots                           |
+| `activeDot`        | `boolean \| { radius?: number }`              | matches `showDots`                          | Active (hovered) dot config                    |
+| `height`           | `number \| "100%"`                            | `"100%"`                                    | ResponsiveContainer height                     |
+| `margin`           | `{ top, right, bottom, left }`                | `{ top: 4, right: 12, bottom: 0, left: 4 }` | Chart margin                                   |
+| `yDomain`          | `[number, number]`                            | auto                                        | Custom Y axis domain                           |
+| `yWidth`           | `number`                                      | auto                                        | Fixed Y axis width                             |
+| `tickFontSize`     | `number`                                      | `10`                                        | XAxis / YAxis tick font size                   |
+| `yTickFormatter`   | `(value: number) => string`                   | k-formatter (`1000` → `1k`)                 | Custom Y axis tick formatter                   |
+| `tooltipFormatter` | `(value, name) => [string, string] \| string` | —                                           | Recharts Tooltip formatter                     |
+| `children`         | `ReactNode`                                   | —                                           | Extra Recharts elements (e.g. `ReferenceLine`) |
+| `className`        | `string`                                      | —                                           | Additional Tailwind classes on the wrapper     |
+
+### Variants
+
+| Variant | Description                                                 |
+| ------- | ----------------------------------------------------------- |
+| `area`  | Filled area chart with a vertical linear gradient (default) |
+| `line`  | Stroke-only line chart, dots shown by default               |
+
+### Usage
+
+```tsx
+import { Chart } from "@/components/ui/chart";
+
+{
+  /* Area chart (default) */
+}
+<Chart
+  data={historyData}
+  xKey="month"
+  dataKey="value"
+  color="#3b82f6"
+  tooltipFormatter={(v) => [`$${Number(v).toLocaleString()}`, "Net Worth"]}
+/>;
+
+{
+  /* Line chart with reference line */
+}
+import { ReferenceLine } from "recharts";
+
+<Chart
+  variant="line"
+  data={weightData}
+  xKey="date"
+  dataKey="weight"
+  color="var(--chart-1)"
+  height={220}
+  yDomain={[60, 90]}
+  showDots={{ radius: 3 }}
+  tooltipFormatter={(v, name) => [`${v} kg`, "Weight"]}
+>
+  <ReferenceLine y={75} stroke="var(--chart-2)" strokeDasharray="6 3" />
+</Chart>;
 ```
 
 ---

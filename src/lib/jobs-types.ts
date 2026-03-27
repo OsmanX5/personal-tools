@@ -57,21 +57,21 @@ export const APPLICATION_METHODS: ApplicationMethod[] = [
 
 export const STATUS_COLORS: Record<JobStatus, string> = {
   Interested:
-    "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900",
+    "bg-blue-50 border-blue-200 dark:bg-blue-900/25 dark:border-blue-700/50",
   Applied:
-    "bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900",
+    "bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/25",
   "In-Process":
-    "bg-violet-50 border-violet-200 dark:bg-violet-950/40 dark:border-violet-900",
+    "bg-violet-50 border-violet-200 dark:bg-violet-900/25 dark:border-violet-700/50",
   Rejected:
-    "bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-900",
+    "bg-rose-50 border-rose-200 dark:bg-rose-900/25 dark:border-rose-700/50",
   Offered:
-    "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900",
+    "bg-emerald-50 border-emerald-200 dark:bg-emerald-900/25 dark:border-emerald-700/50",
 };
 
 export const STATUS_HEADER_COLORS: Record<JobStatus, string> = {
-  Interested: "bg-blue-600 dark:bg-blue-800",
-  Applied: "bg-amber-500 dark:bg-amber-700",
-  "In-Process": "bg-violet-600 dark:bg-violet-800",
-  Rejected: "bg-rose-600 dark:bg-rose-800",
-  Offered: "bg-emerald-600 dark:bg-emerald-800",
+  Interested: "bg-blue-600 dark:bg-blue-500/15",
+  Applied: "bg-amber-500 dark:bg-amber-500/12",
+  "In-Process": "bg-violet-600 dark:bg-violet-500/15",
+  Rejected: "bg-rose-600 dark:bg-rose-500/15",
+  Offered: "bg-emerald-600 dark:bg-emerald-500/15",
 };

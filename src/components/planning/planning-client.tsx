@@ -14,6 +14,7 @@ import type {
   IncomeStreamType,
   IncomeEntry,
   IncomeEntryRow,
+  IncomeHistoryPoint,
   EmergencyFundConfig,
   EmergencyFundConfigFormData,
   FinancialSnapshot,
@@ -36,6 +37,7 @@ export default function PlanningClient() {
   const [entries, setEntries] = useState<IncomeEntry[]>([]);
   const [efConfig, setEfConfig] = useState<EmergencyFundConfig | null>(null);
   const [accounts, setAccounts] = useState<NetWorthAccount[]>([]);
+  const [incomeHistory, setIncomeHistory] = useState<IncomeHistoryPoint[]>([]);
 
   // ── UI state ──────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
@@ -148,15 +150,29 @@ export default function PlanningClient() {
     }
   }, []);
 
+  const fetchIncomeHistory = useCallback(async (dc: Currency) => {
+    try {
+      const res = await fetch(
+        `/api/planning/income-entries/history?displayCurrency=${dc}&months=6`,
+      );
+      if (!res.ok) throw new Error("Failed to fetch income history");
+      const data = await res.json();
+      return data.history as IncomeHistoryPoint[];
+    } catch {
+      return [];
+    }
+  }, []);
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [snap, proj, str, ent, ef, accts] = await Promise.all([
+    const [snap, proj, str, ent, ef, accts, hist] = await Promise.all([
       fetchSnapshot(displayCurrency),
       fetchProjections(displayCurrency, includedTypes),
       fetchStreams(),
       fetchEntries(incomeMonth, incomeYear),
       fetchEfConfig(),
       fetchAccounts(),
+      fetchIncomeHistory(displayCurrency),
     ]);
     setSnapshot(snap);
     setProjections(proj);
@@ -164,6 +180,7 @@ export default function PlanningClient() {
     setEntries(ent);
     setEfConfig(ef);
     setAccounts(accts);
+    setIncomeHistory(hist);
     setLoading(false);
   }, [
     displayCurrency,
@@ -175,6 +192,7 @@ export default function PlanningClient() {
     fetchEntries,
     fetchEfConfig,
     fetchAccounts,
+    fetchIncomeHistory,
   ]);
 
   useEffect(() => {
@@ -335,6 +353,8 @@ export default function PlanningClient() {
         return [...prev, saved];
       });
       toast.success("Income entry saved");
+      // Refresh history chart
+      fetchIncomeHistory(displayCurrency).then(setIncomeHistory);
     } catch {
       toast.error("Failed to save income entry");
     }
@@ -413,6 +433,7 @@ export default function PlanningClient() {
                 year={incomeYear}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
+                incomeHistory={incomeHistory}
                 onMonthChange={handleIncomeMonthChange}
                 onAddStream={() => {
                   setEditingStream(null);
