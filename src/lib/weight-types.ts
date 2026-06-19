@@ -72,3 +72,76 @@ export const GOAL_STATUS_COLORS: Record<GoalStatus, string> = {
   Abandoned:
     "bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800/40 dark:text-gray-300 dark:border-gray-700/50",
 };
+
+export const BMI_TARGET_THRESHOLDS = [25, 30, 35] as const;
+
+export function weightForBmi(bmi: number, heightCm: number): number {
+  const heightM = heightCm / 100;
+  if (heightM <= 0) return 0;
+  return Math.round(bmi * heightM * heightM * 10) / 10;
+}
+
+export interface WeightTrend {
+  kgPerDay: number;
+  samples: number;
+}
+
+export function computeWeightTrend(
+  entries: WeightEntry[],
+  windowDays = 30,
+): WeightTrend | null {
+  if (entries.length < 2) return null;
+
+  const now = Date.now();
+  const cutoff = now - windowDays * 24 * 60 * 60 * 1000;
+  const points = entries
+    .map((e) => ({ t: new Date(e.date).getTime(), w: e.weight }))
+    .filter((p) => p.t >= cutoff)
+    .sort((a, b) => a.t - b.t);
+
+  if (points.length < 2) return null;
+
+  // Least-squares slope on (days, weight)
+  const dayMs = 24 * 60 * 60 * 1000;
+  const xs = points.map((p) => (p.t - points[0].t) / dayMs);
+  const ys = points.map((p) => p.w);
+  const n = points.length;
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY);
+    den += (xs[i] - meanX) ** 2;
+  }
+  if (den === 0) return null;
+
+  return { kgPerDay: num / den, samples: n };
+}
+
+export interface BmiTargetProjection {
+  reached: boolean;
+  deltaKg: number; // currentWeight - targetWeight (positive = need to lose)
+  etaDays: number | null;
+  converging: boolean;
+}
+
+export function projectBmiTarget(
+  currentWeight: number,
+  targetWeight: number,
+  kgPerDay: number | null,
+): BmiTargetProjection {
+  const deltaKg = currentWeight - targetWeight;
+  const reached = Math.abs(deltaKg) < 0.1;
+
+  if (reached || kgPerDay == null) {
+    return { reached, deltaKg, etaDays: null, converging: false };
+  }
+
+  // Need to lose if delta > 0 (kgPerDay should be negative); gain if delta < 0
+  const converging =
+    (deltaKg > 0 && kgPerDay < 0) || (deltaKg < 0 && kgPerDay > 0);
+  const etaDays = converging ? Math.abs(deltaKg / kgPerDay) : null;
+
+  return { reached, deltaKg, etaDays, converging };
+}

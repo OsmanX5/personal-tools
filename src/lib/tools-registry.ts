@@ -7,6 +7,7 @@ import {
   CheckSquare,
   GraduationCap,
   TrendingUp,
+  Repeat,
 } from "lucide-react";
 
 export interface ToolConfig {
@@ -20,6 +21,8 @@ export interface ToolConfig {
   icon: LucideIcon;
   /** Whether the tool is built or still a placeholder */
   status: "active" | "coming-soon";
+  /** Sidebar group label */
+  group: string;
 }
 
 /**
@@ -41,6 +44,7 @@ export const tools: ToolConfig[] = [
       "Track accounts, transactions, and view your net worth across currencies.",
     icon: DollarSign,
     status: "active",
+    group: "Finance",
   },
   {
     name: "Budget Planner",
@@ -49,6 +53,7 @@ export const tools: ToolConfig[] = [
       "Track expenses, set category budgets, and plan future financial goals.",
     icon: Receipt,
     status: "active",
+    group: "Finance",
   },
   {
     name: "Financial Planning",
@@ -57,6 +62,16 @@ export const tools: ToolConfig[] = [
       "Track income, monitor emergency fund, and project your financial future.",
     icon: TrendingUp,
     status: "active",
+    group: "Finance",
+  },
+  {
+    name: "Subscriptions",
+    slug: "subscriptions",
+    description:
+      "Manage recurring subscriptions, renewal dates, reminders, and budget sync.",
+    icon: Repeat,
+    status: "active",
+    group: "Finance",
   },
   {
     name: "Job Applications",
@@ -65,6 +80,7 @@ export const tools: ToolConfig[] = [
       "Track job applications, statuses, and follow-ups in one place.",
     icon: Briefcase,
     status: "active",
+    group: "Career",
   },
   {
     name: "Weight Tracker",
@@ -72,6 +88,7 @@ export const tools: ToolConfig[] = [
     description: "Log weight, track BMI automatically, and set weight goals.",
     icon: Weight,
     status: "active",
+    group: "Health",
   },
   {
     name: "Habits Tracker",
@@ -80,6 +97,7 @@ export const tools: ToolConfig[] = [
       "Build daily routines, track streaks, and log quantitative habits.",
     icon: CheckSquare,
     status: "active",
+    group: "Health",
   },
   {
     name: "Courses Tracker",
@@ -88,5 +106,6 @@ export const tools: ToolConfig[] = [
       "Organize your learning — track courses, books, and tutorials with progress and skill tags.",
     icon: GraduationCap,
     status: "active",
+    group: "Learning",
   },
 ];

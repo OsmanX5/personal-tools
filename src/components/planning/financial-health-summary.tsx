@@ -16,6 +16,7 @@ import type { Currency } from "@/lib/networth-types";
 interface FinancialHealthSummaryProps {
   snapshot: FinancialSnapshot | null;
   displayCurrency: Currency;
+  hideValues?: boolean;
 }
 
 function fmt(value: number, symbol: string) {
@@ -28,8 +29,11 @@ function fmt(value: number, symbol: string) {
 export function FinancialHealthSummary({
   snapshot,
   displayCurrency,
+  hideValues,
 }: FinancialHealthSummaryProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
+  const money = (value: number) =>
+    hideValues ? "****" : fmt(value, symbol);
 
   if (!snapshot) {
     return (
@@ -63,20 +67,20 @@ export function FinancialHealthSummary({
   const cards = [
     {
       label: "Net Worth",
-      value: fmt(snapshot.totalNetWorth, symbol),
-      sub: `Avg savings ${fmt(snapshot.avgMonthlySavings, symbol)}/mo`,
+      value: money(snapshot.totalNetWorth),
+      sub: `Avg savings ${money(snapshot.avgMonthlySavings)}/mo`,
       icon: <DollarSign className="h-4 w-4 text-muted-foreground" />,
     },
     {
       label: "Monthly Income",
-      value: fmt(snapshot.monthlyIncome, symbol),
-      sub: `Avg ${fmt(snapshot.avgMonthlyIncome, symbol)}/mo`,
+      value: money(snapshot.monthlyIncome),
+      sub: `Avg ${money(snapshot.avgMonthlyIncome)}/mo`,
       icon: <TrendingUp className="h-4 w-4 text-green-500" />,
     },
     {
       label: "Monthly Expenses",
-      value: fmt(snapshot.monthlyExpenses, symbol),
-      sub: `Expected ${fmt(snapshot.currentMonthExpectedTotal, symbol)} · Recurring ${fmt(snapshot.recurringMonthlyTotal, symbol)}/mo`,
+      value: money(snapshot.monthlyExpenses),
+      sub: `Expected ${money(snapshot.currentMonthExpectedTotal)} · Recurring ${money(snapshot.recurringMonthlyTotal)}/mo`,
       icon: <TrendingDown className="h-4 w-4 text-red-500" />,
     },
     {

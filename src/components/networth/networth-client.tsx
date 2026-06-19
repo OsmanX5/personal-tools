@@ -286,7 +286,17 @@ export default function NetWorthClient() {
               : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
           }
         >
-          <p>No accounts yet. Add your first account to get started.</p>
+          <p>No Account Yet</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditingAccount(null);
+              setAccountDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Account
+          </Button>
         </motion.div>
       ) : (
         <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">

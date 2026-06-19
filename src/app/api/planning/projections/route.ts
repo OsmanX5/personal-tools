@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import NetWorthAccount from "@/models/networth_account";
 import Expense from "@/models/expense";
 import IncomeStream from "@/models/income_stream";
+import IncomeEntry from "@/models/income_entry";
 import EmergencyFundConfig from "@/models/emergency_fund_config";
 import { PROJECTION_HORIZONS, HORIZON_MONTHS } from "@/lib/planning-types";
 
@@ -23,6 +24,41 @@ function convert(
   if (from === to) return amount;
   const inUsd = amount / (rates[from] || 1);
   return inUsd * (rates[to] || 1);
+}
+
+/**
+ * Calculate compound interest growth over months
+ * @param principal Initial investment amount
+ * @param monthlyRate Monthly interest rate (e.g., 0.005 for 0.5%)
+ * @param months Number of months to compound over
+ * @returns Final amount after compound interest
+ */
+function calculateCompoundInterest(
+  principal: number,
+  monthlyRate: number,
+  months: number,
+): number {
+  return principal * Math.pow(1 + monthlyRate, months);
+}
+
+/**
+ * Calculate compound interest on monthly savings deposits
+ * Uses geometric series formula for deposits made at end of each month
+ * @param monthlyDeposit Amount deposited each month
+ * @param monthlyRate Monthly interest rate (e.g., 0.005 for 0.5%)
+ * @param months Number of months
+ * @returns Final accumulated amount with interest
+ */
+function calculateSavingsWithInterest(
+  monthlyDeposit: number,
+  monthlyRate: number,
+  months: number,
+): number {
+  if (monthlyRate === 0) return monthlyDeposit * months;
+  // Geometric series: deposit * (((1 + r)^n - 1) / r)
+  return (
+    monthlyDeposit * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate)
+  );
 }
 
 async function fetchRates(): Promise<Record<string, number>> {
@@ -46,6 +82,19 @@ export async function GET(request: NextRequest) {
   await dbConnect();
   const { searchParams } = new URL(request.url);
   const dc = searchParams.get("displayCurrency") || "SAR";
+  const includeInvestmentInterest =
+    searchParams.get("includeInvestmentInterest") !== "false"; // defaults to true
+
+  const interestRateParam = parseFloat(
+    searchParams.get("interestRate") ?? "",
+  );
+  const ANNUAL_INTEREST_RATE =
+    Number.isFinite(interestRateParam) &&
+    interestRateParam >= 0 &&
+    interestRateParam <= 1
+      ? interestRateParam
+      : 0.06;
+  const MONTHLY_INTEREST_RATE = ANNUAL_INTEREST_RATE / 12;
 
   const rates = await fetchRates();
   const now = new Date();
@@ -55,12 +104,17 @@ export async function GET(request: NextRequest) {
   // 1. Current net worth
   const accounts = await NetWorthAccount.find({ status: "active" });
   let totalNetWorth = 0;
+  let investmentAccountsBalance = 0;
   let emergencyFundCurrent = 0;
   for (const a of accounts) {
     const converted = convert(a.amount, a.currency, dc, rates);
     totalNetWorth += converted;
     if (a.liquidity === "Immediate" || a.liquidity === "Hours") {
       emergencyFundCurrent += converted;
+    }
+    // Track investment accounts for interest calculation
+    if (a.purpose === "Investment") {
+      investmentAccountsBalance += converted;
     }
   }
 
@@ -80,7 +134,29 @@ export async function GET(request: NextRequest) {
     if ((s.recurrence ?? "recurring") === "one-time") continue;
     projectedMonthlyIncome += convert(s.defaultAmount, s.currency, dc, rates);
   }
-
+  // for freelance stream calcuate the avarage for the last 12 months and use that as the projected monthly income
+  const freelanceStreams = activeStreams.filter((s) => s.type === "Freelance");
+  for (const s of freelanceStreams) {
+    const twelveMonthsAgo = new Date(currentYear, currentMonth - 13, 1);
+    const monthStart = new Date(currentYear, currentMonth - 1, 1);
+    const moneyEnteries = await IncomeEntry.find({
+      streamId: s._id,
+      date: { $gte: twelveMonthsAgo, $lt: monthStart },
+    });
+    let total = 0;
+    let count = 0;
+    for (const e of moneyEnteries) {
+      total += convert(e.amount, e.currency, dc, rates);
+      count++;
+    }
+    if (count > 0) {
+      const avg = total / count;
+      console.log(
+        `Freelance stream ${s.name} average over last 12 months: ${avg}`,
+      );
+      projectedMonthlyIncome += avg;
+    }
+  }
   // 3. Recurring expense baseline (normalised to monthly)
   const FREQ_TO_MONTHLY: Record<string, number> = {
     Weekly: 52 / 12,
@@ -121,12 +197,36 @@ export async function GET(request: NextRequest) {
   const projections = PROJECTION_HORIZONS.map((horizon) => {
     const months = HORIZON_MONTHS[horizon];
     const projectedSavings = avgMonthlySavings * months;
+
+    let interestGrowth = 0;
+    if (includeInvestmentInterest) {
+      // Interest on existing investment accounts
+      const investmentWithInterest = calculateCompoundInterest(
+        investmentAccountsBalance,
+        MONTHLY_INTEREST_RATE,
+        months,
+      );
+      const interestOnExisting =
+        investmentWithInterest - investmentAccountsBalance;
+
+      // Interest on projected savings (assuming all savings are invested)
+      const savingsWithInterest = calculateSavingsWithInterest(
+        avgMonthlySavings,
+        MONTHLY_INTEREST_RATE,
+        months,
+      );
+      const interestOnSavings = savingsWithInterest - projectedSavings;
+
+      interestGrowth = interestOnExisting + interestOnSavings;
+    }
+
     return {
       horizon,
       months,
-      projectedNetWorth: totalNetWorth + projectedSavings,
+      projectedNetWorth: totalNetWorth + projectedSavings + interestGrowth,
       projectedSavings,
       monthlyContribution: avgMonthlySavings,
+      interestEarned: includeInvestmentInterest ? interestGrowth : 0,
     };
   });
 

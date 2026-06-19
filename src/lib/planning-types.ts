@@ -157,30 +157,63 @@ export interface FinancialSnapshot {
 
 // ── Projections ──────────────────────────────────────────────────────
 
-export type ProjectionHorizon = "3m" | "6m" | "12m" | "2y" | "5y";
+export type ProjectionHorizon =
+  | "1y"
+  | "2y"
+  | "3y"
+  | "4y"
+  | "5y"
+  | "6y"
+  | "7y"
+  | "8y"
+  | "9y"
+  | "10y"
+  | "15y"
+  | "20y";
 
 export const PROJECTION_HORIZONS: ProjectionHorizon[] = [
-  "3m",
-  "6m",
-  "12m",
+  "1y",
   "2y",
+  "3y",
+  "4y",
   "5y",
+  "6y",
+  "7y",
+  "8y",
+  "9y",
+  "10y",
+  "15y",
+  "20y",
 ];
 
 export const HORIZON_MONTHS: Record<ProjectionHorizon, number> = {
-  "3m": 3,
-  "6m": 6,
-  "12m": 12,
+  "1y": 12,
   "2y": 24,
+  "3y": 36,
+  "4y": 48,
   "5y": 60,
+  "6y": 72,
+  "7y": 84,
+  "8y": 96,
+  "9y": 108,
+  "10y": 120,
+  "15y": 180,
+  "20y": 240,
 };
 
 export const HORIZON_LABELS: Record<ProjectionHorizon, string> = {
-  "3m": "3 Months",
-  "6m": "6 Months",
-  "12m": "1 Year",
+  "1y": "1 Year",
   "2y": "2 Years",
+  "3y": "3 Years",
+  "4y": "4 Years",
   "5y": "5 Years",
+  "6y": "6 Years",
+  "7y": "7 Years",
+  "8y": "8 Years",
+  "9y": "9 Years",
+  "10y": "10 Years",
+  "15y": "15 Years",
+  "20y": "20 Years",
 };
 
 export interface Projection {
@@ -189,6 +222,7 @@ export interface Projection {
   projectedNetWorth: number;
   projectedSavings: number;
   monthlyContribution: number;
+  interestEarned: number;
 }
 
 export interface ProjectionsData {

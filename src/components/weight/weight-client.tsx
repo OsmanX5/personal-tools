@@ -12,6 +12,7 @@ import { WeightEntryFormDialog } from "@/components/weight/weight-entry-form-dia
 import { WeightGoalCard } from "@/components/weight/weight-goal-card";
 import { WeightGoalFormDialog } from "@/components/weight/weight-goal-form-dialog";
 import { WeightChart } from "@/components/weight/weight-chart";
+import { BmiTargetsPanel } from "@/components/weight/bmi-targets-panel";
 import {
   type WeightEntry,
   type WeightEntryFormData,
@@ -20,6 +21,8 @@ import {
   type UserSettings,
   getBmiCategory,
   BMI_CATEGORY_COLORS,
+  BMI_TARGET_THRESHOLDS,
+  weightForBmi,
 } from "@/lib/weight-types";
 
 export default function WeightClient() {
@@ -93,6 +96,14 @@ export default function WeightClient() {
     () => goals.find((g) => g.status === "Active") ?? null,
     [goals],
   );
+
+  const bmiTargetWeights = useMemo(() => {
+    if (!userHeight) return undefined;
+    return BMI_TARGET_THRESHOLDS.map((bmi) => ({
+      bmi,
+      weight: weightForBmi(bmi, userHeight),
+    }));
+  }, [userHeight]);
 
   // ─── Entry CRUD ───────────────────────────────────────
   const handleEntrySubmit = async (data: WeightEntryFormData) => {
@@ -458,6 +469,14 @@ export default function WeightClient() {
           <WeightChart
             entries={entries}
             goalWeight={activeGoal?.targetWeight}
+            bmiTargetWeights={bmiTargetWeights}
+          />
+
+          {/* BMI Targets */}
+          <BmiTargetsPanel
+            entries={entries}
+            heightCm={userHeight}
+            hideValues={hideValues}
           />
 
           {/* Goals Section */}

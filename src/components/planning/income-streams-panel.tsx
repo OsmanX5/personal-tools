@@ -37,6 +37,7 @@ interface IncomeStreamsPanelProps {
   year: number;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
   incomeHistory: IncomeHistoryPoint[];
   onMonthChange: (dir: -1 | 1) => void;
   onAddStream: () => void;
@@ -58,6 +59,7 @@ export function IncomeStreamsPanel({
   year,
   displayCurrency,
   exchangeRates,
+  hideValues,
   incomeHistory,
   onMonthChange,
   onAddStream,
@@ -108,11 +110,13 @@ export function IncomeStreamsPanel({
             </Button>
           </div>
           <p className="text-sm font-semibold">
-            Total: {symbol}
-            {totalIncome.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            Total:{" "}
+            {hideValues
+              ? "****"
+              : `${symbol}${totalIncome.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}`}
           </p>
         </div>
       </CardHeader>
@@ -130,6 +134,7 @@ export function IncomeStreamsPanel({
               stream={streams.find((s) => s._id === entry.streamId) ?? null}
               displayCurrency={displayCurrency}
               exchangeRates={exchangeRates}
+              hideValues={hideValues}
               index={i}
               onEditStream={onEditStream}
               onDeleteStream={onDeleteStream}
@@ -147,6 +152,7 @@ export function IncomeStreamsPanel({
             <IncomeHistoryChart
               data={incomeHistory}
               displayCurrency={displayCurrency}
+              hideValues={hideValues}
             />
           </>
         )}
@@ -160,6 +166,7 @@ interface IncomeEntryItemProps {
   stream: IncomeStream | null;
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
   index: number;
   onEditStream: (stream: IncomeStream) => void;
   onDeleteStream: (id: string) => void;
@@ -171,6 +178,7 @@ function IncomeEntryItem({
   stream,
   displayCurrency,
   exchangeRates,
+  hideValues,
   index,
   onEditStream,
   onDeleteStream,
@@ -269,13 +277,14 @@ function IncomeEntryItem({
             className="text-right cursor-pointer hover:underline"
           >
             <p className="text-sm font-semibold">
-              {symbol}
-              {converted.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {hideValues
+                ? "****"
+                : `${symbol}${converted.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}`}
             </p>
-            {entry.currency !== displayCurrency && (
+            {!hideValues && entry.currency !== displayCurrency && (
               <p className="text-[10px] text-muted-foreground">
                 {entry.currency} {entry.amount.toLocaleString()}
               </p>
@@ -310,9 +319,11 @@ function IncomeEntryItem({
 function IncomeHistoryChart({
   data,
   displayCurrency,
+  hideValues,
 }: {
   data: IncomeHistoryPoint[];
   displayCurrency: Currency;
+  hideValues?: boolean;
 }) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
 
@@ -342,8 +353,11 @@ function IncomeHistoryChart({
           height="100%"
           yDomain={yDomain}
           yWidth={50}
+          yTickFormatter={hideValues ? () => "" : undefined}
           tooltipFormatter={(v) => [
-            `${symbol}${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            hideValues
+              ? "****"
+              : `${symbol}${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
             "Income",
           ]}
         />

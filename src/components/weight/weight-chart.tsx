@@ -9,12 +9,22 @@ import type { WeightEntry } from "@/lib/weight-types";
 
 type RangeOption = 7 | 30;
 
+interface BmiTargetWeight {
+  bmi: number;
+  weight: number;
+}
+
 interface WeightChartProps {
   entries: WeightEntry[];
   goalWeight?: number;
+  bmiTargetWeights?: BmiTargetWeight[];
 }
 
-export function WeightChart({ entries, goalWeight }: WeightChartProps) {
+export function WeightChart({
+  entries,
+  goalWeight,
+  bmiTargetWeights,
+}: WeightChartProps) {
   const [range, setRange] = useState<RangeOption>(7);
 
   const chartData = useMemo(() => {
@@ -39,14 +49,26 @@ export function WeightChart({ entries, goalWeight }: WeightChartProps) {
     if (chartData.length === 0) return undefined;
     const weights = chartData.map((d) => d.weight);
     if (goalWeight) weights.push(goalWeight);
+    // Only include BMI target lines that fall close to the data range so
+    // they don't squash the chart when current weight is far from BMI 35.
+    if (bmiTargetWeights?.length) {
+      const baseMin = Math.min(...weights);
+      const baseMax = Math.max(...weights);
+      const span = Math.max(baseMax - baseMin, 1);
+      for (const t of bmiTargetWeights) {
+        if (t.weight >= baseMin - span && t.weight <= baseMax + span) {
+          weights.push(t.weight);
+        }
+      }
+    }
     const min = Math.min(...weights);
     const max = Math.max(...weights);
     const padding = Math.max((max - min) * 0.15, 1);
     return [
       Math.floor((min - padding) * 10) / 10,
       Math.ceil((max + padding) * 10) / 10,
-    ];
-  }, [chartData, goalWeight]);
+    ] as [number, number];
+  }, [chartData, goalWeight, bmiTargetWeights]);
 
   return (
     <Card>
@@ -95,6 +117,21 @@ export function WeightChart({ entries, goalWeight }: WeightChartProps) {
                   }}
                 />
               )}
+              {bmiTargetWeights?.map((t) => (
+                <ReferenceLine
+                  key={`bmi-${t.bmi}`}
+                  y={t.weight}
+                  stroke="#94a3b8"
+                  strokeDasharray="3 3"
+                  strokeOpacity={0.6}
+                  label={{
+                    value: `BMI ${t.bmi}: ${t.weight} kg`,
+                    position: "insideBottomRight",
+                    fill: "var(--muted-foreground)",
+                    fontSize: 10,
+                  }}
+                />
+              ))}
             </Chart>
           </div>
         )}

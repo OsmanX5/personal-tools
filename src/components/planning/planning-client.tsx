@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { FinancialHealthSummary } from "@/components/planning/financial-health-summary";
 import { IncomeStreamsPanel } from "@/components/planning/income-streams-panel";
@@ -23,6 +23,8 @@ import type {
 import { INCOME_STREAM_TYPES } from "@/lib/planning-types";
 import { CURRENCIES } from "@/lib/networth-types";
 import { ToggleGroup } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
 import type {
   Currency,
   ExchangeRates,
@@ -42,6 +44,10 @@ export default function PlanningClient() {
   // ── UI state ──────────────────────────────────────────────────────
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [hideValues, setHideValues] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("planning-hide-values") === "true";
+  });
   const [displayCurrency, setDisplayCurrency] = useState<Currency>("SAR");
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
     USD: 1,
@@ -53,6 +59,21 @@ export default function PlanningClient() {
   const [includedTypes, setIncludedTypes] = useState<Set<IncomeStreamType>>(
     () => new Set(INCOME_STREAM_TYPES),
   );
+
+  // Investment interest toggle
+  const [includeInvestmentInterest, setIncludeInvestmentInterest] =
+    useState(true);
+
+  // Annual investment interest rate (decimal, e.g. 0.06 = 6%)
+  const [interestRate, setInterestRate] = useState(0.06);
+  const interestRateRef = useRef(interestRate);
+  useEffect(() => {
+    interestRateRef.current = interestRate;
+  }, [interestRate]);
+
+  useEffect(() => {
+    localStorage.setItem("planning-hide-values", String(hideValues));
+  }, [hideValues]);
 
   // Income month navigation
   const now = new Date();
@@ -78,11 +99,16 @@ export default function PlanningClient() {
   }, []);
 
   const fetchProjections = useCallback(
-    async (dc: Currency, types: Set<IncomeStreamType>) => {
+    async (
+      dc: Currency,
+      types: Set<IncomeStreamType>,
+      includeInterest: boolean = true,
+      rate: number = 0.06,
+    ) => {
       try {
         const typesParam = Array.from(types).join(",");
         const res = await fetch(
-          `/api/planning/projections?displayCurrency=${dc}&includeTypes=${encodeURIComponent(typesParam)}&_t=${Date.now()}`,
+          `/api/planning/projections?displayCurrency=${dc}&includeTypes=${encodeURIComponent(typesParam)}&includeInvestmentInterest=${includeInterest}&interestRate=${rate}&_t=${Date.now()}`,
         );
         if (!res.ok) throw new Error("Failed to fetch projections");
         return (await res.json()) as ProjectionsData;
@@ -167,7 +193,12 @@ export default function PlanningClient() {
     setLoading(true);
     const [snap, proj, str, ent, ef, accts, hist] = await Promise.all([
       fetchSnapshot(displayCurrency),
-      fetchProjections(displayCurrency, includedTypes),
+      fetchProjections(
+        displayCurrency,
+        includedTypes,
+        includeInvestmentInterest,
+        interestRateRef.current,
+      ),
       fetchStreams(),
       fetchEntries(incomeMonth, incomeYear),
       fetchEfConfig(),
@@ -186,6 +217,8 @@ export default function PlanningClient() {
     displayCurrency,
     incomeMonth,
     incomeYear,
+    includeInvestmentInterest,
+    includedTypes,
     fetchSnapshot,
     fetchProjections,
     fetchStreams,
@@ -215,7 +248,39 @@ export default function PlanningClient() {
       next.add(type);
     }
     setIncludedTypes(next);
-    const proj = await fetchProjections(displayCurrency, next);
+    const proj = await fetchProjections(
+      displayCurrency,
+      next,
+      includeInvestmentInterest,
+      interestRate,
+    );
+    setProjections(proj);
+  };
+
+  // ── Investment interest toggle ─────────────────────────────────────
+
+  const handleToggleInvestmentInterest = async () => {
+    const nextValue = !includeInvestmentInterest;
+    setIncludeInvestmentInterest(nextValue);
+    const proj = await fetchProjections(
+      displayCurrency,
+      includedTypes,
+      nextValue,
+      interestRate,
+    );
+    setProjections(proj);
+  };
+
+  // ── Recalculate with new interest rate ────────────────────────────
+
+  const handleRecalculate = async (newRate: number) => {
+    setInterestRate(newRate);
+    const proj = await fetchProjections(
+      displayCurrency,
+      includedTypes,
+      includeInvestmentInterest,
+      newRate,
+    );
     setProjections(proj);
   };
 
@@ -403,11 +468,25 @@ export default function PlanningClient() {
             Track income, monitor your emergency fund, and project your future
           </p>
         </div>
-        <ToggleGroup
-          items={CURRENCIES}
-          value={displayCurrency}
-          onValueChange={handleCurrencyChange}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setHideValues((v) => !v)}
+            title={hideValues ? "Show values" : "Hide values"}
+          >
+            {hideValues ? (
+              <EyeOff className="h-5 w-5" />
+            ) : (
+              <Eye className="h-5 w-5" />
+            )}
+          </Button>
+          <ToggleGroup
+            items={CURRENCIES}
+            value={displayCurrency}
+            onValueChange={handleCurrencyChange}
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -420,6 +499,7 @@ export default function PlanningClient() {
           <FinancialHealthSummary
             snapshot={snapshot}
             displayCurrency={displayCurrency}
+            hideValues={hideValues}
           />
 
           {/* Main content: 3-column layout */}
@@ -433,6 +513,7 @@ export default function PlanningClient() {
                 year={incomeYear}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
+                hideValues={hideValues}
                 incomeHistory={incomeHistory}
                 onMonthChange={handleIncomeMonthChange}
                 onAddStream={() => {
@@ -455,6 +536,7 @@ export default function PlanningClient() {
                 accounts={accounts}
                 displayCurrency={displayCurrency}
                 exchangeRates={exchangeRates}
+                hideValues={hideValues}
                 onOpenConfig={() => setEfConfigDialogOpen(true)}
               />
             </div>
@@ -465,8 +547,13 @@ export default function PlanningClient() {
                 data={projections}
                 currentNetWorth={snapshot?.totalNetWorth ?? 0}
                 displayCurrency={displayCurrency}
+                hideValues={hideValues}
                 includedTypes={includedTypes}
                 onToggleType={handleToggleIncomeType}
+                includeInvestmentInterest={includeInvestmentInterest}
+                onToggleInvestmentInterest={handleToggleInvestmentInterest}
+                interestRate={interestRate}
+                onRecalculate={handleRecalculate}
               />
             </div>
           </div>

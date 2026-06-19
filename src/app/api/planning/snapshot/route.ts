@@ -56,7 +56,10 @@ export async function GET(request: NextRequest) {
   for (const a of accounts) {
     const converted = convert(a.amount, a.currency, dc, rates);
     totalNetWorth += converted;
-    if (a.liquidity === "Immediate" || a.liquidity === "Hours") {
+    if (
+      (a.liquidity === "Immediate" || a.liquidity === "Hours") &&
+      a.purpose !== "Investment"
+    ) {
       emergencyFundCurrent += converted;
     }
   }

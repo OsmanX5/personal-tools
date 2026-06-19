@@ -24,6 +24,7 @@ interface EmergencyFundPanelProps {
   accounts: NetWorthAccount[];
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
+  hideValues?: boolean;
   onOpenConfig: () => void;
 }
 
@@ -39,14 +40,23 @@ export function EmergencyFundPanel({
   accounts,
   displayCurrency,
   exchangeRates,
+  hideValues,
   onOpenConfig,
 }: EmergencyFundPanelProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
+  const money = (value: number) =>
+    hideValues ? "****" : fmt(value, symbol);
   const immediateAccounts = accounts.filter(
-    (a) => a.liquidity === "Immediate" && a.status === "active",
+    (a) =>
+      a.liquidity === "Immediate" &&
+      a.status === "active" &&
+      a.purpose !== "Investment",
   );
   const hoursAccounts = accounts.filter(
-    (a) => a.liquidity === "Hours" && a.status === "active",
+    (a) =>
+      a.liquidity === "Hours" &&
+      a.status === "active" &&
+      a.purpose !== "Investment",
   );
   const allLiquidAccounts = [...immediateAccounts, ...hoursAccounts];
 
@@ -155,7 +165,7 @@ export function EmergencyFundPanel({
           </Badge>
         </div>
         <span className={`text-sm font-medium ${active ? "" : "line-through"}`}>
-          {fmt(converted, symbol)}
+          {money(converted)}
         </span>
       </motion.button>
     );
@@ -182,9 +192,9 @@ export function EmergencyFundPanel({
         {/* Progress bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span>{fmt(localStatus.currentAmount, symbol)}</span>
+            <span>{money(localStatus.currentAmount)}</span>
             <span className="text-muted-foreground">
-              of {fmt(localStatus.targetAmount, symbol)}
+              of {money(localStatus.targetAmount)}
             </span>
           </div>
           <div className="h-3 w-full overflow-hidden rounded-full bg-muted">

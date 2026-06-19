@@ -55,35 +55,65 @@ export function Sidebar() {
           {!collapsed && <span>Home</span>}
         </Link>
 
-        {/* Tool links */}
-        {tools.map((tool) => {
-          const isActive = pathname.startsWith(`/${tool.slug}`);
-          const Icon = tool.icon;
-          return (
-            <Link
-              key={tool.slug}
-              href={`/${tool.slug}`}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {!collapsed && (
-                <span className="flex flex-1 items-center justify-between">
-                  {tool.name}
-                  {tool.status === "coming-soon" && (
-                    <Badge variant="secondary" className="ml-2 text-xs">
-                      Soon
-                    </Badge>
-                  )}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+        {/* Tool links (grouped) */}
+        {Array.from(new Set(tools.map((t) => t.group))).map(
+          (group, groupIndex) => {
+            const groupTools = tools.filter((t) => t.group === group);
+            return (
+              <div key={group}>
+                {/* Group separator / label */}
+                {groupIndex > 0 && (
+                  <div
+                    className={cn(
+                      "mx-2",
+                      collapsed
+                        ? "my-2 border-t border-sidebar-border"
+                        : "mt-3",
+                    )}
+                  />
+                )}
+                {!collapsed && (
+                  <p
+                    className={cn(
+                      "px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                      groupIndex === 0 ? "pt-3" : "pt-1",
+                    )}
+                  >
+                    {group}
+                  </p>
+                )}
+                {groupTools.map((tool) => {
+                  const isActive = pathname.startsWith(`/${tool.slug}`);
+                  const Icon = tool.icon;
+                  return (
+                    <Link
+                      key={tool.slug}
+                      href={`/${tool.slug}`}
+                      className={cn(
+                        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground",
+                      )}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && (
+                        <span className="flex flex-1 items-center justify-between">
+                          {tool.name}
+                          {tool.status === "coming-soon" && (
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              Soon
+                            </Badge>
+                          )}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          },
+        )}
       </nav>
     </aside>
   );
