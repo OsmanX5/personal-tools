@@ -8,6 +8,7 @@ import {
   GraduationCap,
   TrendingUp,
   Repeat,
+  Youtube,
 } from "lucide-react";
 
 export interface ToolConfig {
@@ -107,5 +108,14 @@ export const tools: ToolConfig[] = [
     icon: GraduationCap,
     status: "active",
     group: "Learning",
+  },
+  {
+    name: "YouTube",
+    slug: "youtube",
+    description:
+      "Manage video ideas through a production pipeline — from idea to published, with checklists, target dates, and content pillars.",
+    icon: Youtube,
+    status: "active",
+    group: "Content",
   },
 ];
