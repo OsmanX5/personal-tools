@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Chart } from "@/components/ui/chart";
+import { assetValueAt, assetCurrentValue } from "@/lib/asset-utils";
 import type {
   NetWorthAccount,
+  Asset,
   Currency,
   ExchangeRates,
 } from "@/lib/networth-types";
@@ -18,7 +20,10 @@ import {
   NETWORTH_MOTION_STAGGER,
 } from "@/components/networth/networth-motion";
 
-type BreakdownGroup = "account" | "currency" | "liquidity" | "purpose";
+type BreakdownGroup = "account" | "currency" | "liquidity" | "purpose" | "type";
+
+/** Whether assets are folded into the headline figure, or kept out of it. */
+type Scope = "accounts" | "total";
 
 const PIE_COLORS = [
   "#22c55e", // green
@@ -35,6 +40,7 @@ const PIE_COLORS = [
 
 interface NetWorthSummaryProps {
   accounts: NetWorthAccount[];
+  assets: Asset[];
   displayCurrency: Currency;
   exchangeRates: ExchangeRates;
   hideValues?: boolean;
@@ -53,6 +59,7 @@ function convertAmount(
 
 export function NetWorthSummary({
   accounts,
+  assets,
   displayCurrency,
   exchangeRates,
   hideValues,
@@ -64,19 +71,74 @@ export function NetWorthSummary({
   const [trendPeriod, setTrendPeriod] = useState<"12m" | "30d">("30d");
   const [breakdownGroup, setBreakdownGroup] =
     useState<BreakdownGroup>("account");
+  // Default to accounts-only so the liquid net worth reads clean; assets are
+  // opted into rather than silently baked in.
+  const [scope, setScope] = useState<Scope>("accounts");
+  const includeAssets = scope === "total";
 
-  // Breakdown bar data: grouped by account / currency / liquidity
+  const accountsTotal = useMemo(
+    () =>
+      accounts.reduce(
+        (sum, a) =>
+          sum +
+          convertAmount(
+            a.amount,
+            a.currency ?? "USD",
+            displayCurrency,
+            exchangeRates,
+          ),
+        0,
+      ),
+    [accounts, displayCurrency, exchangeRates],
+  );
+
+  const assetsTotal = useMemo(
+    () =>
+      assets.reduce(
+        (sum, a) =>
+          sum +
+          convertAmount(
+            assetCurrentValue(a),
+            a.currency ?? "USD",
+            displayCurrency,
+            exchangeRates,
+          ),
+        0,
+      ),
+    [assets, displayCurrency, exchangeRates],
+  );
+
+  const total = includeAssets ? accountsTotal + assetsTotal : accountsTotal;
+
+  // "type" only says something once assets are in play.
+  const breakdownGroups = useMemo(() => {
+    const groups: [BreakdownGroup, string][] = [
+      ["account", "Account"],
+      ["currency", "Currency"],
+      ["liquidity", "Liquidity"],
+      ["purpose", "Purpose"],
+    ];
+    if (includeAssets) groups.push(["type", "Type"]);
+    return groups;
+  }, [includeAssets]);
+
+  const activeBreakdownGroup =
+    breakdownGroup === "type" && !includeAssets ? "account" : breakdownGroup;
+
   const pieData = useMemo(() => {
     const groupMap = new Map<string, number>();
+
     for (const a of accounts) {
       const key =
-        breakdownGroup === "account"
+        activeBreakdownGroup === "account"
           ? a.name
-          : breakdownGroup === "currency"
+          : activeBreakdownGroup === "currency"
             ? (a.currency ?? "USD")
-            : breakdownGroup === "liquidity"
+            : activeBreakdownGroup === "liquidity"
               ? (a.liquidity ?? "Other")
-              : (a.purpose ?? "Other");
+              : activeBreakdownGroup === "purpose"
+                ? (a.purpose ?? "Other")
+                : "Accounts";
       const converted = convertAmount(
         a.amount,
         a.currency ?? "USD",
@@ -85,46 +147,51 @@ export function NetWorthSummary({
       );
       groupMap.set(key, (groupMap.get(key) ?? 0) + converted);
     }
+
+    if (includeAssets) {
+      for (const asset of assets) {
+        const key =
+          activeBreakdownGroup === "account"
+            ? asset.name
+            : activeBreakdownGroup === "currency"
+              ? (asset.currency ?? "USD")
+              : activeBreakdownGroup === "liquidity"
+                ? "Illiquid"
+                : activeBreakdownGroup === "purpose"
+                  ? asset.category
+                  : "Assets";
+        const converted = convertAmount(
+          assetCurrentValue(asset),
+          asset.currency ?? "USD",
+          displayCurrency,
+          exchangeRates,
+        );
+        groupMap.set(key, (groupMap.get(key) ?? 0) + converted);
+      }
+    }
+
     return Array.from(groupMap.entries())
       .map(([name, value]) => ({ name, value: Math.max(0, value) }))
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [accounts, displayCurrency, exchangeRates, breakdownGroup]);
+  }, [
+    accounts,
+    assets,
+    includeAssets,
+    displayCurrency,
+    exchangeRates,
+    activeBreakdownGroup,
+  ]);
 
-  const total = useMemo(
-    () => pieData.reduce((sum, d) => sum + d.value, 0),
-    [pieData],
-  );
+  /** Total across all accounts (and optionally assets) at a point in time. */
+  const netWorthAt = useMemo(() => {
+    return (endOfPeriod: Date) => {
+      let sum = 0;
 
-  // Historical net worth from transaction history (last 12 months)
-  const historyData12m = useMemo(() => {
-    const now = new Date();
-    const months: { label: string; date: Date }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({
-        label: d.toLocaleDateString(undefined, {
-          month: "short",
-          year: "2-digit",
-        }),
-        date: d,
-      });
-    }
-
-    return months.map(({ label, date }) => {
-      const endOfMonth = new Date(
-        date.getFullYear(),
-        date.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-      );
-
-      let monthTotal = 0;
       for (const account of accounts) {
-        // Walk transactions to compute the account value at end of this month
-        // Start from the earliest known state and accumulate
+        const created = new Date(account.startDate ?? account.createdAt);
+        if (created > endOfPeriod) continue;
+
         const txs = account.transactions
           .slice()
           .sort(
@@ -132,48 +199,72 @@ export function NetWorthSummary({
           );
 
         if (txs.length === 0) {
-          // No transactions — use current amount if account existed
-          const created = new Date(account.startDate ?? account.createdAt);
-          if (created <= endOfMonth) {
-            monthTotal += convertAmount(
-              account.amount,
-              account.currency ?? "USD",
-              displayCurrency,
-              exchangeRates,
-            );
-          }
+          sum += convertAmount(
+            account.amount,
+            account.currency ?? "USD",
+            displayCurrency,
+            exchangeRates,
+          );
           continue;
         }
 
-        // Compute balance at end of month by working backwards from current amount
-        // current amount = initial + sum(all transactions)
-        // amount at end of month = current amount - sum(transactions after end of month)
-        const txsAfter = txs.filter((tx) => new Date(tx.date) > endOfMonth);
-        const sumAfter = txsAfter.reduce((s, tx) => s + tx.amount, 0);
-        const amountAtMonth = account.amount - sumAfter;
+        // Walk back from the current balance by undoing later transactions.
+        const sumAfter = txs
+          .filter((tx) => new Date(tx.date) > endOfPeriod)
+          .reduce((s, tx) => s + tx.amount, 0);
+        sum += convertAmount(
+          Math.max(0, account.amount - sumAfter),
+          account.currency ?? "USD",
+          displayCurrency,
+          exchangeRates,
+        );
+      }
 
-        // Only include if account existed by then
-        const created = new Date(account.startDate ?? account.createdAt);
-        if (created <= endOfMonth) {
-          monthTotal += convertAmount(
-            Math.max(0, amountAtMonth),
-            account.currency ?? "USD",
+      if (includeAssets) {
+        for (const asset of assets) {
+          sum += convertAmount(
+            assetValueAt(asset, endOfPeriod),
+            asset.currency ?? "USD",
             displayCurrency,
             exchangeRates,
           );
         }
       }
 
-      return { month: label, value: Math.round(monthTotal * 100) / 100 };
-    });
-  }, [accounts, displayCurrency, exchangeRates]);
+      return sum;
+    };
+  }, [accounts, assets, includeAssets, displayCurrency, exchangeRates]);
 
-  // Historical net worth — daily points for last 30 days
+  const historyData12m = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+      const endOfMonth = new Date(
+        d.getFullYear(),
+        d.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+      return {
+        month: d.toLocaleDateString(undefined, {
+          month: "short",
+          year: "2-digit",
+        }),
+        value: Math.round(netWorthAt(endOfMonth) * 100) / 100,
+      };
+    });
+  }, [netWorthAt]);
+
   const historyData30d = useMemo(() => {
     const now = new Date();
-    const days: { label: string; endOfDay: Date }[] = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    return Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - (29 - i),
+      );
       const endOfDay = new Date(
         d.getFullYear(),
         d.getMonth(),
@@ -182,88 +273,17 @@ export function NetWorthSummary({
         59,
         59,
       );
-      days.push({
-        label: d.toLocaleDateString(undefined, {
+      return {
+        month: d.toLocaleDateString(undefined, {
           month: "short",
           day: "numeric",
         }),
-        endOfDay,
-      });
-    }
-
-    return days.map(({ label, endOfDay }) => {
-      let dayTotal = 0;
-      for (const account of accounts) {
-        const txs = account.transactions
-          .slice()
-          .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-          );
-
-        if (txs.length === 0) {
-          const created = new Date(account.startDate ?? account.createdAt);
-          if (created <= endOfDay) {
-            dayTotal += convertAmount(
-              account.amount,
-              account.currency ?? "USD",
-              displayCurrency,
-              exchangeRates,
-            );
-          }
-          continue;
-        }
-
-        const txsAfter = txs.filter((tx) => new Date(tx.date) > endOfDay);
-        const sumAfter = txsAfter.reduce((s, tx) => s + tx.amount, 0);
-        const amountAtDay = account.amount - sumAfter;
-
-        const created = new Date(account.startDate ?? account.createdAt);
-        if (created <= endOfDay) {
-          dayTotal += convertAmount(
-            Math.max(0, amountAtDay),
-            account.currency ?? "USD",
-            displayCurrency,
-            exchangeRates,
-          );
-        }
-      }
-
-      return { month: label, value: Math.round(dayTotal * 100) / 100 };
+        value: Math.round(netWorthAt(endOfDay) * 100) / 100,
+      };
     });
-  }, [accounts, displayCurrency, exchangeRates]);
+  }, [netWorthAt]);
 
   const periodChanges = useMemo(() => {
-    const getNetWorthAt = (endOfDay: Date) => {
-      let t = 0;
-      for (const account of accounts) {
-        const created = new Date(account.startDate ?? account.createdAt);
-        if (created > endOfDay) continue;
-        const txs = account.transactions
-          .slice()
-          .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-          );
-        if (txs.length === 0) {
-          t += convertAmount(
-            account.amount,
-            account.currency ?? "USD",
-            displayCurrency,
-            exchangeRates,
-          );
-          continue;
-        }
-        const sumAfter = txs
-          .filter((tx) => new Date(tx.date) > endOfDay)
-          .reduce((s, tx) => s + tx.amount, 0);
-        t += convertAmount(
-          Math.max(0, account.amount - sumAfter),
-          account.currency ?? "USD",
-          displayCurrency,
-          exchangeRates,
-        );
-      }
-      return t;
-    };
     const now = new Date();
     const eod = (daysAgo: number) =>
       new Date(
@@ -275,43 +295,58 @@ export function NetWorthSummary({
         59,
       );
     return [
-      { label: "1D", past: getNetWorthAt(eod(1)) },
-      { label: "1W", past: getNetWorthAt(eod(7)) },
-      { label: "1M", past: getNetWorthAt(eod(30)) },
+      { label: "1D", past: netWorthAt(eod(1)) },
+      { label: "1W", past: netWorthAt(eod(7)) },
+      { label: "1M", past: netWorthAt(eod(30)) },
     ];
-  }, [accounts, displayCurrency, exchangeRates]);
+  }, [netWorthAt]);
+
+  const fmt = (v: number) =>
+    hideValues
+      ? "****"
+      : `${symbol}${v.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })}`;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
       {/* Selector row — above the card */}
       <motion.div
-        className="flex shrink-0 items-center justify-between"
+        className="flex shrink-0 items-center justify-between gap-2"
         initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={
           shouldReduceMotion ? { duration: 0 } : getNetWorthEnterTransition()
         }
       >
-        <ToggleGroup
-          items={(["breakdown", "trend"] as const).map((v) => ({
-            value: v,
-            label: v.charAt(0).toUpperCase() + v.slice(1),
-          }))}
-          value={view}
-          onValueChange={setView}
-          size="xs"
-        />
+        <div className="flex items-center gap-2">
+          <ToggleGroup
+            items={(["breakdown", "trend"] as const).map((v) => ({
+              value: v,
+              label: v.charAt(0).toUpperCase() + v.slice(1),
+            }))}
+            value={view}
+            onValueChange={setView}
+            size="xs"
+          />
+          <ToggleGroup
+            items={[
+              { value: "accounts" as const, label: "Accounts" },
+              { value: "total" as const, label: "+ Assets" },
+            ]}
+            value={scope}
+            onValueChange={setScope}
+            size="xs"
+          />
+        </div>
         {view === "breakdown" && (
           <ToggleGroup
-            items={(
-              [
-                ["account", "Account"],
-                ["currency", "Currency"],
-                ["liquidity", "Liquidity"],
-                ["purpose", "Purpose"],
-              ] as [BreakdownGroup, string][]
-            ).map(([key, label]) => ({ value: key, label }))}
-            value={breakdownGroup}
+            items={breakdownGroups.map(([key, label]) => ({
+              value: key,
+              label,
+            }))}
+            value={activeBreakdownGroup}
             onValueChange={setBreakdownGroup}
             size="xs"
           />
@@ -339,13 +374,13 @@ export function NetWorthSummary({
         }
       >
         <Card className="flex min-h-0 flex-1 flex-row">
-          <CardHeader className="w-52 shrink-0 justify-center gap-0 pb-3 pt-3 px-5">
+          <CardHeader className="w-56 shrink-0 justify-center gap-0 pb-3 pt-3 px-5">
             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-              Net Worth
+              {includeAssets ? "Total Net Worth" : "Net Worth · Accounts"}
             </p>
             <motion.p
               className="text-3xl font-extrabold tracking-tight"
-              key={`${view}-${trendPeriod}-${breakdownGroup}-${displayCurrency}-${Math.round(total)}`}
+              key={`${scope}-${displayCurrency}-${Math.round(total)}`}
               initial={shouldReduceMotion ? undefined : { opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               transition={
@@ -354,14 +389,31 @@ export function NetWorthSummary({
                   : getNetWorthEnterTransition(NETWORTH_MOTION_FAST_DURATION)
               }
             >
-              {hideValues
-                ? "****"
-                : `${symbol}${total.toLocaleString(undefined, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}`}
+              {fmt(total)}
             </motion.p>
-            <div className="mt-3 flex flex-col gap-1.5 border-t pt-3">
+
+            {/* Always show the split, so the accounts-only figure stays
+                readable no matter which scope is active. */}
+            <div className="mt-2 flex flex-col gap-1 border-t pt-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Accounts
+                </span>
+                <span className="text-xs font-semibold tabular-nums">
+                  {fmt(accountsTotal)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Assets
+                </span>
+                <span className="text-xs font-semibold tabular-nums text-amber-600 dark:text-amber-500">
+                  {fmt(assetsTotal)}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-2 flex flex-col gap-1.5 border-t pt-2">
               {periodChanges.map(({ label, past }) => {
                 const change = total - past;
                 const pct = past > 0 ? (change / past) * 100 : null;
@@ -408,7 +460,7 @@ export function NetWorthSummary({
             <AnimatePresence mode="wait" initial={false}>
               {view === "breakdown" ? (
                 <motion.div
-                  key={`breakdown-${breakdownGroup}`}
+                  key={`breakdown-${activeBreakdownGroup}-${scope}`}
                   className="flex h-full flex-col"
                   initial={
                     shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
@@ -513,7 +565,7 @@ export function NetWorthSummary({
                 </motion.div>
               ) : (
                 <motion.div
-                  key={`trend-${trendPeriod}`}
+                  key={`trend-${trendPeriod}-${scope}`}
                   className="flex h-full flex-col gap-2"
                   initial={
                     shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
@@ -534,10 +586,10 @@ export function NetWorthSummary({
                     }
                     xKey="month"
                     dataKey="value"
-                    color="#3b82f6"
+                    color={includeAssets ? "#f59e0b" : "#3b82f6"}
                     tooltipFormatter={(value) => [
                       `${symbol}${Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                      "Net Worth",
+                      includeAssets ? "Total Net Worth" : "Accounts",
                     ]}
                   />
                 </motion.div>

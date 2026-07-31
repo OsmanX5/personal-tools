@@ -2,7 +2,7 @@
 
 > **Tool slug:** `networth`
 > **Status:** Active
-> **Description:** Track accounts, transactions, and view your net worth across currencies.
+> **Description:** Track accounts, assets, transactions, and view your net worth across currencies.
 
 ---
 
@@ -11,11 +11,12 @@
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Data Model](#data-model)
-4. [API Reference](#api-reference)
-5. [Frontend Components](#frontend-components)
-6. [Features](#features)
-7. [Currency & Exchange Rates](#currency--exchange-rates)
-8. [File Map](#file-map)
+4. [Accounts vs Assets](#accounts-vs-assets)
+5. [API Reference](#api-reference)
+6. [Frontend Components](#frontend-components)
+7. [Features](#features)
+8. [Currency & Exchange Rates](#currency--exchange-rates)
+9. [File Map](#file-map)
 
 ---
 
@@ -23,7 +24,9 @@
 
 The NetWorth tool allows users to manage multiple financial accounts, record transactions, and view their total net worth converted to a chosen display currency. The tool supports three currencies (USD, SAR, EUR), four account purposes (Savings, Current, Investment, Other), five account locations, and four liquidity tiers. It provides visual breakdowns and historical trend charts.
 
-The current UI is a fixed-height dashboard layout designed to fit inside the app shell without page-level scrolling in normal use. The left column contains the tool title, value-visibility toggle, filters, and a scrollable account list. The right column is split vertically between a net worth summary panel and a selected-account detail panel.
+Alongside accounts, the tool tracks **assets** — non-spendable stores of value such as property, vehicles, or gold. Assets are deliberately kept out of the account net worth figure so the liquid number stays readable on its own; the combined total is always shown next to it, and the summary panel has an explicit scope toggle for folding assets in.
+
+The current UI is a fixed-height dashboard layout designed to fit inside the app shell without page-level scrolling in normal use. The left column contains the tool title, value-visibility toggle, a split totals block, an Accounts/Assets tab, filters, and a scrollable list. The right column is split vertically between a net worth summary panel and a detail panel for the selected account or asset.
 
 ---
 
@@ -43,13 +46,14 @@ The current UI is a fixed-height dashboard layout designed to fit inside the app
 │                                                        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
 │  │AccountListItem│  │NetWorthSummary│ │TransactionDe-│ │
-│  │  (left panel) │  │ (breakdown + │ │tail Panel    │ │
-│  │              │  │  trend charts)│ │(right panel) │ │
+│  │AssetListItem  │  │ (breakdown + │ │tail Panel    │ │
+│  │  (left panel) │  │  trend, with │ │AssetDetail-  │ │
+│  │              │  │ scope toggle) │ │Panel (right) │ │
 │  └──────────────┘  └──────────────┘  └──────────────┘ │
 │                                                        │
 │  ┌──────────────────┐  ┌────────────────────────────┐  │
 │  │AccountFormDialog  │  │TransactionDialog           │  │
-│  │(create/edit acct) │  │(add tx / update value)     │  │
+│  │AssetFormDialog    │  │AssetValueDialog            │  │
 │  └──────────────────┘  └────────────────────────────┘  │
 └──────────────────────┬─────────────────────────────────┘
                        │ fetch()
@@ -60,13 +64,19 @@ The current UI is a fixed-height dashboard layout designed to fit inside the app
 │   GET/POST    /api/networth                            │
 │   GET/PUT/DEL /api/networth/[id]                       │
 │   POST        /api/networth/[id]/transactions          │
+│   DELETE      /api/networth/[id]/transactions/[txId]   │
+│   GET/POST    /api/networth/assets                     │
+│   GET/PUT/DEL /api/networth/assets/[id]                │
+│   POST        /api/networth/assets/[id]/value          │
+│   DELETE      /api/networth/assets/[id]/value/[entryId]│
 │   GET         /api/networth/exchange-rates             │
 └──────────────────────┬─────────────────────────────────┘
                        │ Mongoose
 ┌──────────────────────▼─────────────────────────────────┐
 │                    MongoDB                             │
-│            Collection: networthaccounts                │
-│           Model: src/models/networth_account.ts        │
+│   Collections: networthaccounts · assets               │
+│   Models: src/models/networth_account.ts               │
+│           src/models/asset.ts                          │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -138,6 +148,70 @@ enum TransactionType {
 }
 ```
 
+### Asset (Mongoose document)
+
+Collection: `assets` · Model: `src/models/asset.ts`
+
+| Field             | Type              | Required | Default    | Description                                          |
+| ----------------- | ----------------- | -------- | ---------- | ---------------------------------------------------- |
+| `_id`             | ObjectId          | auto     | —          | MongoDB document ID                                  |
+| `name`            | String            | yes      | —          | Asset display name (trimmed)                         |
+| `description`     | String            | no       | —          | Optional description (trimmed)                       |
+| `status`          | Enum              | no       | `"owned"`  | `"owned"` or `"sold"`                                |
+| `value`           | Number            | no       | `0`        | Current value — always the latest snapshot by date   |
+| `currency`        | Enum              | no       | `"USD"`    | `"USD"` \| `"SAR"` \| `"EUR"`                        |
+| `category`        | Enum              | yes      | —          | See `AssetCategory` below                            |
+| `acquisitionDate` | Date              | no       | `Date.now` | When the asset was acquired                          |
+| `acquisitionCost` | Number            | no       | `0`        | What was originally paid — drives the gain figure    |
+| `tags`            | String[]          | no       | `[]`       | Free-form tags                                       |
+| `valueHistory`    | AssetValueEntry[] | no       | `[]`       | Embedded array of dated value snapshots              |
+| `createdAt`       | Date              | auto     | —          | Mongoose timestamp                                   |
+| `updatedAt`       | Date              | auto     | —          | Mongoose timestamp                                   |
+
+### AssetValueEntry (embedded sub-document)
+
+| Field   | Type     | Required | Description                                              |
+| ------- | -------- | -------- | -------------------------------------------------------- |
+| `_id`   | ObjectId | auto     | Auto-generated sub-doc ID                                |
+| `date`  | Date     | no       | Date the valuation applies to (defaults to now)          |
+| `value` | Number   | yes      | Absolute value at that date — **not** a delta            |
+| `note`  | String   | no       | Optional label, e.g. `"Acquisition"`, `"yearly valuation"` |
+
+```typescript
+enum AssetCategory {
+  Property,
+  Vehicle,
+  PreciousMetal, // "Precious Metal"
+  Equipment,
+  Collectible,
+  Other,
+}
+```
+
+---
+
+## Accounts vs Assets
+
+The two concepts are stored and modelled separately because they behave differently:
+
+|                    | Account                                    | Asset                                            |
+| ------------------ | ------------------------------------------ | ------------------------------------------------ |
+| Records            | Transactions (**deltas**)                  | Value snapshots (**absolute values**)             |
+| History rebuilt by | Replaying transactions backward from today | Taking the latest snapshot at or before a date    |
+| Metadata           | Purpose, location, liquidity               | Category, acquisition date, acquisition cost      |
+| Counts toward      | The headline net worth figure              | The combined total only, unless scope is switched |
+| Retired via        | `status: "archived"`                       | `status: "sold"` (contributes 0 to every total)   |
+
+**`value` is derived, not free-floating.** Every write path (`POST value`, `PUT`, `DELETE` entry) calls `syncAssetValue()` from `src/models/asset.ts`, which pins `value` to the snapshot with the latest **date**. Snapshots can be back-dated, so the newest entry in the array is not necessarily the newest in time.
+
+**Reconstruction helpers** live in `src/lib/asset-utils.ts`:
+
+- `assetValueAt(asset, date)` — value at a point in time. Returns `0` for sold assets and for dates before `acquisitionDate`; falls back to the earliest snapshot for dates between acquisition and the first recorded value.
+- `assetCurrentValue(asset)` — current value, or `0` if sold.
+- `sumAssets(assets, displayCurrency, rates, at?)` — converted total across assets, optionally at a past date.
+
+**History seeding.** `POST /api/networth/assets` seeds `valueHistory` so a new asset already has a trend line: an `"Acquisition"` entry at `acquisitionDate` for `acquisitionCost` (when non-zero), plus an `"Initial value"` entry dated now when the current value differs from what was paid.
+
 ---
 
 ## API Reference
@@ -206,6 +280,67 @@ Add a transaction and update the account balance. Supports two modes:
   - `404` — Account not found
   - `400` — Missing `amount` and `type` (direct mode)
 
+### `GET /api/networth/assets`
+
+List all assets sorted by `createdAt` descending.
+
+- **Response:** `200` — `Asset[]`
+
+### `POST /api/networth/assets`
+
+Create a new asset. `valueHistory` in the request body is ignored — the server seeds it (see [Accounts vs Assets](#accounts-vs-assets)).
+
+- **Body:** `AssetFormData` (name, description, status, value, currency, category, acquisitionDate, acquisitionCost, tags)
+- **Response:** `201` — created `Asset`
+
+### `GET /api/networth/assets/[id]`
+
+Fetch a single asset by ID.
+
+- **Response:** `200` — `Asset`
+- **Error:** `404` — `{ error: "Asset not found" }`
+
+### `PUT /api/networth/assets/[id]`
+
+Update an asset's metadata. `valueHistory` is stripped from the body — history is append-only through this route. If `value` differs from the stored value, an `"Edited"` snapshot is appended so the history stays truthful.
+
+- **Body:** Partial `AssetFormData`
+- **Response:** `200` — updated `Asset`
+- **Error:** `404` — `{ error: "Asset not found" }`
+
+### `DELETE /api/networth/assets/[id]`
+
+Delete an asset and its entire value history permanently.
+
+- **Response:** `200` — `{ ok: true }`
+- **Error:** `404` — `{ error: "Asset not found" }`
+
+### `POST /api/networth/assets/[id]/value`
+
+Record a dated value snapshot.
+
+| Body Field | Type   | Required | Description                                  |
+| ---------- | ------ | -------- | -------------------------------------------- |
+| `value`    | Number | yes      | Absolute new value                           |
+| `date`     | String | no       | ISO date the valuation applies to (def. now) |
+| `note`     | String | no       | Optional label                               |
+
+**Effect:** Pushes the entry, then re-pins `asset.value` to the latest snapshot by date — so a back-dated snapshot does not clobber a newer one.
+
+- **Response:** `201` — updated `Asset`
+- **Errors:**
+  - `404` — Asset not found
+  - `400` — Missing `value`, or `value` is not a number
+
+### `DELETE /api/networth/assets/[id]/value/[entryId]`
+
+Remove a value snapshot and re-pin `asset.value` to the latest remaining one. If the history is emptied, the current value is left unchanged.
+
+- **Response:** `200` — updated `Asset`
+- **Errors:**
+  - `404` — Asset not found
+  - `404` — `{ error: "Value entry not found" }`
+
 ### `GET /api/networth/exchange-rates`
 
 Fetch live exchange rates from [open.er-api.com](https://open.er-api.com), cached in-memory for 1 hour.
@@ -227,23 +362,28 @@ Server component that renders `<NetWorthClient />`.
 
 Central client component that:
 
-- Fetches accounts (`GET /api/networth`) and exchange rates on mount
-- Manages all UI state (selected account, dialog open states, display currency, filters)
-- Provides CRUD callbacks that call API endpoints and update local state
-- Computes `total` net worth by converting all accounts to `displayCurrency`
-- Sorts accounts by value (descending, normalized to USD)
-- Filters accounts by `purposeFilter` (All / Savings / Current / Investment / Other)
+- Fetches accounts (`GET /api/networth`), assets (`GET /api/networth/assets`), and exchange rates on mount
+- Manages all UI state (selected account/asset, active list tab, dialog open states, display currency, filters)
+- Provides CRUD callbacks for both accounts and assets that call API endpoints and update local state
+- Computes `accountsTotal`, `assetsTotal`, and `combinedTotal` separately, all converted to `displayCurrency`
+- Sorts accounts and assets by value (descending, normalized to USD)
+- Filters accounts by `purposeFilter` and assets by `categoryFilter`
+
+`selectedAccount` and `selectedAsset` are separate pieces of state, but at most one is ever set — selecting in one list clears the other. The right-hand detail panel renders whichever is non-null.
 
 **Layout (fixed-height dashboard):**
 
-| Left Panel (w-80)                              | Right Panel (flex-1, stacked)                                    |
-| ---------------------------------------------- | ---------------------------------------------------------------- |
-| NetWorth title + hide/show values toggle       | **NetWorthSummary** — top section, roughly 40% of right column   |
-| Total accounts + converted total summary       | **TransactionDetailPanel** — bottom section, roughly 60%         |
-| Currency toggle (USD/SAR/EUR)                  | Both right-side panels are constrained to available shell height |
-| Purpose filter buttons                         |                                                                  |
-| Account list (scrollable inside the left pane) |                                                                  |
-| "+ Add Account" button pinned below the list   |                                                                  |
+| Left Panel (w-80)                                       | Right Panel (flex-1, stacked)                                    |
+| ------------------------------------------------------- | ---------------------------------------------------------------- |
+| NetWorth title + hide/show values toggle                | **NetWorthSummary** — top section, roughly 40% of right column   |
+| Split totals block: Accounts / Assets / Total           | **TransactionDetailPanel** or **AssetDetailPanel** — bottom 60%  |
+| Currency toggle (USD/SAR/EUR)                           | Both right-side panels are constrained to available shell height |
+| `Accounts (n)` / `Assets (n)` tab toggle                |                                                                  |
+| Purpose filter (accounts) or category filter (assets)   |                                                                  |
+| Account or asset list (scrollable inside the left pane) |                                                                  |
+| "+ Add Account" / "+ Add Asset" pinned below the list   |                                                                  |
+
+The split totals block is the primary answer to "what am I worth without the assets" — the accounts figure, the assets figure, and the combined total are three separate lines, always visible regardless of which tab is active.
 
 ### `AccountListItem`
 
@@ -258,6 +398,19 @@ Compact card for each account in the sidebar list. Features:
 - Click to select, double-click to edit
 - Inline button to update value (opens TransactionDialog in update-value mode)
 - "+" button to add a transaction
+
+### `AssetListItem`
+
+**File:** `src/components/networth/asset-card.tsx`
+
+Compact card for each asset in the sidebar list. Mirrors `AccountListItem` but is visually distinguished by a **dashed** left border, so assets never read as accounts at a glance. Features:
+
+- Color-coded dashed left border by category (amber=Property, cyan=Vehicle, yellow=Precious Metal, slate=Equipment, pink=Collectible, gray=Other)
+- Highlighted background when selected; sold assets are dimmed and carry a "Sold" chip
+- Shows name, category, `Since MMM YYYY`, converted value, and original currency if different
+- Click to select, double-click to edit
+- Inline button to record a new value (opens `AssetValueDialog`)
+- Pencil button to edit
 
 ### `AccountFormDialog`
 
@@ -285,22 +438,50 @@ Modal dialog with two modes:
 1. **Transaction mode:** Select type (Income/Expense/Transfer/MarketChange), enter amount. Shows preview of current balance → new balance.
 2. **Update-value mode:** Choose between Market Change (enter new total value, difference recorded as MarketChange) or Transaction (enter delta amount, recorded as Income/Expense based on sign).
 
+### `AssetFormDialog`
+
+**File:** `src/components/networth/asset-form-dialog.tsx`
+
+Modal dialog for creating or editing an asset. Fields:
+
+- **Asset Name** (required text input)
+- **Description** (optional textarea)
+- **Current Value + Currency** (number input + currency select; on create, typing the value mirrors it into the acquisition cost)
+- **Acquisition Date** (date input)
+- **Acquisition Cost** (number input)
+- **Category** (segmented toggle: Property / Vehicle / Precious Metal / Equipment / Collectible / Other)
+- **Status** (segmented toggle: Owned / Sold, with a note that sold assets stop counting)
+- **Tags** (comma-separated text input, split into array on submit)
+
+### `AssetValueDialog`
+
+**File:** `src/components/networth/asset-value-dialog.tsx`
+
+Modal dialog for recording a value snapshot. Takes the new value, the date it applies to (defaults to today, and may be back-dated), and an optional note. Shows a live preview of the current value and the resulting change.
+
 ### `NetWorthSummary`
 
 **File:** `src/components/networth/net-worth-summary.tsx`
 
-Dashboard panel with two views toggled by the user:
+Dashboard panel with two views and a scope toggle.
 
-1. **Breakdown view:** Horizontal stacked bar showing net worth distribution, grouped by:
+**Scope toggle (`Accounts` / `+ Assets`)** — the core of the accounts/assets separation. It defaults to `Accounts`, so assets are opted into rather than silently baked in, and it drives the headline figure, the breakdown chart, the trend chart, and the 1D/1W/1M deltas together. Regardless of which scope is active, the card header always lists the **Accounts** and **Assets** subtotals underneath the headline number, so both are readable at once.
+
+The header label follows the scope: `Net Worth · Accounts` or `Total Net Worth`. The trend line is blue for accounts-only and amber once assets are folded in.
+
+1. **Breakdown view:** Pie chart plus legend showing net worth distribution, grouped by:
    - Account (default)
-   - Currency
-   - Liquidity
-   - Purpose
-2. **Trend view:** Area chart showing historical total net worth with two period options:
-   - **12 months** — monthly data points computed by replaying transactions backward from current balance
-   - **30 days** — daily data points using the same replay logic
+   - Currency — assets group under their own currency
+   - Liquidity — assets group under `Illiquid`
+   - Purpose — assets group under their category
+   - Type — `Accounts` vs `Assets`; only offered when scope includes assets
+2. **Trend view:** Area chart showing historical net worth with two period options:
+   - **12 months** — monthly data points
+   - **30 days** — daily data points
 
-The summary panel sits at the top of the right column and exposes its view toggle (`Breakdown` / `Trend`) above the card. When in breakdown mode, it also exposes grouping controls (`Account`, `Currency`, `Liquidity`, `Purpose`). When in trend mode, it exposes the period toggle (`12m`, `30d`).
+   Account values are computed by replaying transactions backward from the current balance; asset values come from `assetValueAt()`. Both are summed per data point by the shared `netWorthAt()` helper.
+
+The summary panel sits at the top of the right column and exposes its view toggle (`Breakdown` / `Trend`) and the scope toggle above the card. When in breakdown mode, it also exposes grouping controls. When in trend mode, it exposes the period toggle (`12m`, `30d`).
 
 ### `TransactionDetailPanel`
 
@@ -323,6 +504,19 @@ Right-panel detail view for the selected account:
   - Transfer: blue refresh icon
   - MarketChange: purple trending-up icon
 
+### `AssetDetailPanel`
+
+**File:** `src/components/networth/asset-detail-panel.tsx`
+
+Right-panel detail view for the selected asset — the asset counterpart to `TransactionDetailPanel`:
+
+- Asset name, "Sold" badge where applicable, description, and action buttons (Update Value, Edit, Delete)
+- Current value (converted + original if different)
+- **Since Purchase** gain — absolute change and percentage against `acquisitionCost`, shown instead of the 1D/1W/1M deltas used for accounts, since those windows say little about a house or a car
+- Badges for category, currency, acquisition date, and acquisition cost
+- Value trend area chart (amber) with 12-month and 30-day periods, driven by `assetValueAt()`
+- Value history list showing the latest 5 snapshots (newest first), each with its note, date, absolute value, and the delta against the snapshot before it, with a hover-revealed delete button
+
 ---
 
 ## Features
@@ -339,6 +533,12 @@ Right-panel detail view for the selected account:
 | Market change tracking  | Distinguish market value changes from actual income/expense       |
 | Historical trend charts | Reconstruct past balances by replaying transactions backward      |
 | Net worth breakdown     | Visualize composition by account, currency, liquidity, or purpose |
+| Assets                  | Track property, vehicles, gold, and other non-account holdings    |
+| Separated totals        | Accounts, assets, and combined totals shown as three lines        |
+| Asset scope toggle      | Fold assets into the headline figure and charts, or leave them out |
+| Asset value snapshots   | Dated absolute valuations, back-datable, instead of deltas        |
+| Asset gain tracking     | Change against acquisition cost, in currency and percent          |
+| Sold assets             | Retained for history but contribute nothing to any total          |
 | Fixed-height dashboard  | Uses the available shell height without normal page-level scroll  |
 | Recent transactions     | Shows the latest 5 transactions in the account detail panel       |
 | Account metadata        | Purpose, location, liquidity tier, status (active/archived), tags |
@@ -372,19 +572,36 @@ src/
 │           ├── [id]/
 │           │   ├── route.ts                   # GET / PUT / DELETE by ID
 │           │   └── transactions/
-│           │       └── route.ts               # POST add transaction / update value
+│           │       ├── route.ts               # POST add transaction / update value
+│           │       └── [txId]/
+│           │           └── route.ts           # DELETE transaction (reverses balance)
+│           ├── assets/
+│           │   ├── route.ts                   # GET (list) / POST (create + seed history)
+│           │   └── [id]/
+│           │       ├── route.ts               # GET / PUT / DELETE by ID
+│           │       └── value/
+│           │           ├── route.ts           # POST record value snapshot
+│           │           └── [entryId]/
+│           │               └── route.ts       # DELETE value snapshot
 │           └── exchange-rates/
 │               └── route.ts                   # GET exchange rates (cached)
 ├── components/
 │   └── networth/
 │       ├── networth-client.tsx                # Main client orchestrator
 │       ├── account-card.tsx                   # AccountListItem sidebar card
+│       ├── asset-card.tsx                     # AssetListItem sidebar card
 │       ├── account-form-dialog.tsx            # Create/edit account dialog
+│       ├── asset-form-dialog.tsx              # Create/edit asset dialog
 │       ├── transaction-dialog.tsx             # Add transaction / update value dialog
+│       ├── asset-value-dialog.tsx             # Record asset value snapshot dialog
 │       ├── transaction-detail-panel.tsx        # Selected account detail + tx list
-│       └── net-worth-summary.tsx              # Breakdown + trend charts
+│       ├── asset-detail-panel.tsx             # Selected asset detail + value history
+│       ├── networth-motion.ts                 # Shared motion constants & transitions
+│       └── net-worth-summary.tsx              # Breakdown + trend charts, scope toggle
 ├── lib/
-│   └── networth-types.ts                      # TypeScript types, enums, constants
+│   ├── networth-types.ts                      # TypeScript types, enums, constants
+│   └── asset-utils.ts                         # assetValueAt / assetCurrentValue / sumAssets
 └── models/
-    └── networth_account.ts                    # Mongoose model & schema
+    ├── networth_account.ts                    # Mongoose model & schema
+    └── asset.ts                               # Asset model, schema, syncAssetValue()
 ```

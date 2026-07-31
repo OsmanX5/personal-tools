@@ -16,8 +16,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const tx = account.transactions.id(txId);
-  if (!tx) {
+  const index = account.transactions.findIndex(
+    (entry) => String((entry as { _id?: unknown })._id) === txId,
+  );
+  if (index === -1) {
     return NextResponse.json(
       { error: "Transaction not found" },
       { status: 404 },
@@ -25,8 +27,8 @@ export async function DELETE(
   }
 
   // Reverse the transaction's effect on the account balance
-  account.amount -= tx.amount;
-  tx.deleteOne();
+  account.amount -= account.transactions[index].amount;
+  account.transactions.splice(index, 1);
 
   await account.save();
   return NextResponse.json(account);
