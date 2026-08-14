@@ -29,6 +29,13 @@ CONTAINER_NAME="personal-tools"
 DEFAULT_PORT="${PORT:-3000}"
 ASSUME_YES=false
 
+NGINX_CONTAINER_NAME="personal-tools-nginx"
+NGINX_IMAGE="nginx:1.27-alpine"
+NGINX_CONF="$PROJECT_ROOT/nginx.conf"
+NGINX_NETWORK="personal-tools-net"
+LETSENCRYPT_DIR="/etc/letsencrypt"
+CERTBOT_WEBROOT="/var/www/certbot"
+
 for arg in "$@"; do
   case "$arg" in
     -y|--yes) ASSUME_YES=true ;;
@@ -94,21 +101,30 @@ while port_in_use "$HOST_PORT"; do
   fi
 done
 
-# --- replace any previous container ------------------------------------------
+# --- replace any previous containers -----------------------------------------
 
-if docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
-  if can_prompt; then
-    read -r -p "Container '$CONTAINER_NAME' already exists. Replace it? [y/N] " reply < /dev/tty
-    case "$reply" in
-      [yY]*) ;;
-      *) echo "Aborted."; exit 1 ;;
-    esac
+for name in "$NGINX_CONTAINER_NAME" "$CONTAINER_NAME"; do
+  if docker ps -a --format '{{.Names}}' | grep -qx "$name"; then
+    if can_prompt; then
+      read -r -p "Container '$name' already exists. Replace it? [y/N] " reply < /dev/tty
+      case "$reply" in
+        [yY]*) ;;
+        *) echo "Aborted."; exit 1 ;;
+      esac
+    fi
+    echo "Removing existing container '$name'..."
+    docker rm -f "$name" >/dev/null
   fi
-  echo "Removing existing container '$CONTAINER_NAME'..."
-  docker rm -f "$CONTAINER_NAME" >/dev/null
+done
+
+# --- shared network ----------------------------------------------------------
+
+if ! docker network inspect "$NGINX_NETWORK" >/dev/null 2>&1; then
+  echo "Creating docker network '$NGINX_NETWORK'..."
+  docker network create "$NGINX_NETWORK" >/dev/null
 fi
 
-# --- build and run ------------------------------------------------------------
+# --- build and run app -------------------------------------------------------
 
 echo "Building $IMAGE_NAME..."
 docker build -t "$IMAGE_NAME" .
@@ -118,10 +134,41 @@ docker run -d \
   --name "$CONTAINER_NAME" \
   --env-file "$ENV_FILE" \
   --restart unless-stopped \
+  --network "$NGINX_NETWORK" \
   -p "${HOST_PORT}:3000" \
   "$IMAGE_NAME"
 
+# --- nginx reverse proxy -----------------------------------------------------
+
+if [ ! -f "$NGINX_CONF" ]; then
+  echo "Skipping nginx: $NGINX_CONF not found." >&2
+else
+  NGINX_MOUNTS=(-v "$NGINX_CONF:/etc/nginx/conf.d/default.conf:ro")
+
+  if [ -d "$LETSENCRYPT_DIR" ]; then
+    NGINX_MOUNTS+=(-v "$LETSENCRYPT_DIR:/etc/letsencrypt:ro")
+  else
+    echo "Warning: $LETSENCRYPT_DIR not found — nginx will fail to load TLS certs until certbot runs." >&2
+  fi
+
+  if [ -d "$CERTBOT_WEBROOT" ]; then
+    NGINX_MOUNTS+=(-v "$CERTBOT_WEBROOT:/var/www/certbot:ro")
+  fi
+
+  echo "Starting $NGINX_CONTAINER_NAME (config: $NGINX_CONF)..."
+  docker run -d \
+    --name "$NGINX_CONTAINER_NAME" \
+    --restart unless-stopped \
+    --network "$NGINX_NETWORK" \
+    -p 80:80 \
+    -p 443:443 \
+    "${NGINX_MOUNTS[@]}" \
+    "$NGINX_IMAGE"
+fi
+
 echo
-echo "Running at http://localhost:${HOST_PORT}"
+echo "App running at http://localhost:${HOST_PORT} (direct)"
+echo "Nginx serving on :80 and :443"
 echo "Logs:  docker logs -f $CONTAINER_NAME"
-echo "Stop:  docker stop $CONTAINER_NAME"
+echo "       docker logs -f $NGINX_CONTAINER_NAME"
+echo "Stop:  docker stop $CONTAINER_NAME $NGINX_CONTAINER_NAME"
