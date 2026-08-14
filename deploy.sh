@@ -29,7 +29,7 @@ done
 # --- env file -----------------------------------------------------------------
 
 ENV_FILE=""
-for candidate in .env.production .env.local; do
+for candidate in .env.production .env.local .env; do
   if [ -f "$candidate" ]; then ENV_FILE="$candidate"; break; fi
 done
 
