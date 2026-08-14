@@ -17,6 +17,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV MONGODB_URI="mongodb://placeholder-unused-at-build-time"
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# public/ is empty and therefore untracked by git, so a fresh clone has no such
+# directory and the runtime COPY below would fail. Guarantee it exists.
+RUN mkdir -p public
 RUN npm run build
 
 # ---- runner: minimal runtime image ----

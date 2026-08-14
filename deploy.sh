@@ -5,13 +5,24 @@
 # Picks a host port: tries 3000 (or $PORT), and if it's taken, asks for another
 # one until it finds a free port.
 #
-#   ./scripts/run-prod.sh              # interactive, defaults to port 3000
-#   PORT=3001 ./scripts/run-prod.sh    # start from a different port
-#   ./scripts/run-prod.sh --yes        # never prompt (fails if the port is busy)
+#   ./deploy.sh              # interactive, defaults to port 3000
+#   PORT=3001 ./deploy.sh    # start from a different port
+#   ./deploy.sh --yes        # never prompt (fails if the port is busy)
 #
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+# Find the project root by walking up from this script until package.json turns
+# up, so the script works whether it sits at the root or inside scripts/.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
+while [ ! -f "$PROJECT_ROOT/package.json" ] && [ "$PROJECT_ROOT" != "/" ]; do
+  PROJECT_ROOT="$(dirname "$PROJECT_ROOT")"
+done
+if [ ! -f "$PROJECT_ROOT/package.json" ]; then
+  echo "Could not find package.json at or above $SCRIPT_DIR" >&2
+  exit 1
+fi
+cd "$PROJECT_ROOT"
 
 IMAGE_NAME="personal-tools"
 CONTAINER_NAME="personal-tools"
