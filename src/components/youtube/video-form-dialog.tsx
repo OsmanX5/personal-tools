@@ -152,7 +152,7 @@ export function VideoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Video" : "Add Video Idea"}
@@ -183,7 +183,7 @@ export function VideoFormDialog({
           </div>
 
           {/* Row: Status, Priority, Pillar */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Status</Label>
               <Select

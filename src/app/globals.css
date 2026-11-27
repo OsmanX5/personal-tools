@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Devices with a real mouse. Hover-only reveals must sit behind this, or touch users never see them. */
+@custom-variant hover-device (@media (hover: hover) and (pointer: fine));
 
 @theme inline {
   --color-background: var(--background);
@@ -131,4 +133,28 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ── Responsive layout utilities ─────────────────────────────── */
+/* Tallest a dialog / sheet may grow before its body scrolls. */
+@utility max-h-dialog {
+  max-height: 90dvh;
+}
+/* Respect the iPhone home-indicator / notch areas. */
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+/* Horizontal scroller that hides its scrollbar (tab strips, kanban). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+/* Height a stacked detail panel gets on phones, where it can't fill the column. */
+@utility h-mobile-panel {
+  height: 75dvh;
 }

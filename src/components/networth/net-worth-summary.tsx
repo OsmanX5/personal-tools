@@ -313,7 +313,7 @@ export function NetWorthSummary({
     <div className="flex h-full min-h-0 flex-col gap-2">
       {/* Selector row — above the card */}
       <motion.div
-        className="flex shrink-0 items-center justify-between gap-2"
+        className="flex shrink-0 flex-wrap items-center justify-between gap-2"
         initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={
@@ -373,8 +373,8 @@ export function NetWorthSummary({
             : getNetWorthEnterTransition(0.04)
         }
       >
-        <Card className="flex min-h-0 flex-1 flex-row">
-          <CardHeader className="w-56 shrink-0 justify-center gap-0 pb-3 pt-3 px-5">
+        <Card className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          <CardHeader className="w-full shrink-0 justify-center gap-0 px-5 pt-3 pb-3 lg:w-56">
             <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
               {includeAssets ? "Total Net Worth" : "Net Worth · Accounts"}
             </p>
@@ -480,9 +480,9 @@ export function NetWorthSummary({
                       No data
                     </div>
                   ) : (
-                    <div className="flex h-full flex-col gap-4 md:flex-row md:gap-4 justify-center items-center">
+                    <div className="flex h-full flex-col items-center justify-center gap-4 md:flex-row">
                       {/* Pie Chart */}
-                      <div className="h-full w-full md:w-2/3 min-h-0">
+                      <div className="h-48 min-h-0 w-full md:w-2/3 lg:h-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
@@ -566,7 +566,7 @@ export function NetWorthSummary({
               ) : (
                 <motion.div
                   key={`trend-${trendPeriod}-${scope}`}
-                  className="flex h-full flex-col gap-2"
+                  className="flex h-64 flex-col gap-2 lg:h-full"
                   initial={
                     shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
                   }

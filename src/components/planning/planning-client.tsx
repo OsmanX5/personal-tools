@@ -457,11 +457,11 @@ export default function PlanningClient() {
   // ── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-hidden p-4 md:p-6">
+    <div className="flex flex-col gap-3 lg:h-full lg:overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
             Financial Planning
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -503,9 +503,9 @@ export default function PlanningClient() {
           />
 
           {/* Main content: 3-column layout */}
-          <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-3">
             {/* Left column - Income */}
-            <div className="min-h-0 overflow-y-auto">
+            <div className="lg:min-h-0 lg:overflow-y-auto">
               <IncomeStreamsPanel
                 streams={streams}
                 entries={entryRows}
@@ -530,7 +530,7 @@ export default function PlanningClient() {
             </div>
 
             {/* Middle column - Emergency Fund */}
-            <div className="min-h-0 overflow-y-auto">
+            <div className="lg:min-h-0 lg:overflow-y-auto">
               <EmergencyFundPanel
                 status={snapshot?.emergencyFund ?? null}
                 accounts={accounts}
@@ -542,7 +542,7 @@ export default function PlanningClient() {
             </div>
 
             {/* Right column - Projections */}
-            <div className="min-h-0 overflow-y-auto">
+            <div className="lg:min-h-0 lg:overflow-y-auto">
               <ProjectionsPanel
                 data={projections}
                 currentNetWorth={snapshot?.totalNetWorth ?? 0}

@@ -33,7 +33,6 @@ export function QuickLinksBar() {
   const [adding, setAdding] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
   const [saving, setSaving] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -100,14 +99,9 @@ export function QuickLinksBar() {
     <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2">
       <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
 
-      <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+      <div className="flex flex-1 items-center gap-2 overflow-x-auto py-1.5 pr-1.5">
         {links.map((link) => (
-          <div
-            key={link._id}
-            className="relative shrink-0"
-            onMouseEnter={() => setHoveredId(link._id)}
-            onMouseLeave={() => setHoveredId(null)}
-          >
+          <div key={link._id} className="group relative shrink-0">
             <a
               href={link.url}
               target="_blank"
@@ -125,23 +119,20 @@ export function QuickLinksBar() {
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}
               />
-              <span className="max-w-[120px] truncate">
-                {getDomain(link.url)}
-              </span>
+              <span className="max-w-30 truncate">{getDomain(link.url)}</span>
             </a>
 
-            {hoveredId === link._id && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleDelete(link._id);
-                }}
-                className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:opacity-80"
-                aria-label="Remove link"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            )}
+            {/* Always shown on touch screens; revealed on hover with a mouse. */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete(link._id);
+              }}
+              className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:opacity-80 hover-device:hidden hover-device:group-hover:flex"
+              aria-label="Remove link"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
           </div>
         ))}
 

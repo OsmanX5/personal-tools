@@ -102,7 +102,7 @@ export function JobFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Job Application" : "Add Job Application"}
@@ -110,7 +110,7 @@ export function JobFormDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-2">
           {/* Row 1: Company, Level, Position */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="company">Company *</Label>
               <Input
@@ -164,7 +164,7 @@ export function JobFormDialog({
           </div>
 
           {/* Row 2: Work Style, Country, Application Method */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Work Style *</Label>
               <Select

@@ -262,12 +262,12 @@ export default function WeightClient() {
   const bmiCategory = latestEntry ? getBmiCategory(latestEntry.bmi) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 lg:h-full lg:overflow-hidden">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">Weight Tracker</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Weight Tracker</h1>
             <Button
               variant="ghost"
               size="icon"
@@ -312,15 +312,15 @@ export default function WeightClient() {
       </div>
 
       {/* Stats Cards — full-width row, always on top */}
-      <div className="grid shrink-0 grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {/* Current Weight */}
         <Card>
-          <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Scale className="h-8 w-8 shrink-0 text-muted-foreground" />
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <Scale className="hidden h-8 w-8 sm:block shrink-0 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Current Weight</p>
               {latestEntry ? (
-                <p className="text-2xl font-bold">
+                <p className="text-xl font-bold sm:text-2xl">
                   {hideValues ? "****" : `${latestEntry.weight} kg`}
                 </p>
               ) : (
@@ -332,8 +332,8 @@ export default function WeightClient() {
 
         {/* Height */}
         <Card>
-          <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Ruler className="h-8 w-8 shrink-0 text-muted-foreground" />
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <Ruler className="hidden h-8 w-8 sm:block shrink-0 text-muted-foreground" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground">Height</p>
               {editingHeight ? (
@@ -365,7 +365,7 @@ export default function WeightClient() {
               ) : (
                 <div className="flex items-center gap-1.5">
                   {userHeight ? (
-                    <p className="text-2xl font-bold">{userHeight} cm</p>
+                    <p className="text-xl font-bold sm:text-2xl">{userHeight} cm</p>
                   ) : (
                     <p className="text-lg text-muted-foreground">Not set</p>
                   )}
@@ -388,15 +388,15 @@ export default function WeightClient() {
 
         {/* Current BMI */}
         <Card>
-          <CardContent className="flex items-center gap-3 px-4 py-4">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-bold">
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-bold sm:flex">
               BMI
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Body Mass Index</p>
+              <p className="text-sm text-muted-foreground">BMI</p>
               {latestEntry && bmiCategory ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-xl font-bold sm:text-2xl">
                     {hideValues ? "**" : latestEntry.bmi}
                   </span>
                   <Badge
@@ -415,12 +415,12 @@ export default function WeightClient() {
 
         {/* Active Goal */}
         <Card>
-          <CardContent className="flex items-center gap-3 px-4 py-4">
-            <Target className="h-8 w-8 shrink-0 text-muted-foreground" />
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <Target className="hidden h-8 w-8 sm:block shrink-0 text-muted-foreground" />
             <div>
               <p className="text-sm text-muted-foreground">Active Goal</p>
               {activeGoal ? (
-                <p className="text-2xl font-bold">
+                <p className="text-xl font-bold sm:text-2xl">
                   {hideValues ? "****" : `${activeGoal.targetWeight} kg`}
                 </p>
               ) : (
@@ -432,9 +432,9 @@ export default function WeightClient() {
       </div>
 
       {/* Two-column body */}
-      <div className="flex min-h-0 flex-1 gap-4 overflow-hidden flex-col lg:flex-row">
+      <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:overflow-hidden">
         {/* LEFT COLUMN: Weight Log */}
-        <div className="flex min-h-0 flex-col overflow-hidden lg:flex-[2]">
+        <div className="flex flex-col lg:min-h-0 lg:flex-[2] lg:overflow-hidden">
           <h2 className="shrink-0 pb-3 text-lg font-semibold">Weight Log</h2>
           {entries.length === 0 ? (
             <Card>
@@ -447,7 +447,7 @@ export default function WeightClient() {
               </CardContent>
             </Card>
           ) : (
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
               <div className="grid gap-3 pr-1">
                 {entries.map((entry) => (
                   <WeightEntryCard
@@ -463,8 +463,8 @@ export default function WeightClient() {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Chart + Goals */}
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:flex-[3]">
+        {/* RIGHT COLUMN: Chart + Goals — shown first on phones */}
+        <div className="flex flex-col gap-4 *:shrink-0 max-lg:order-first lg:min-h-0 lg:flex-[3] lg:overflow-y-auto">
           {/* Weight Trend Chart */}
           <WeightChart
             entries={entries}

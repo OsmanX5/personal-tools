@@ -35,11 +35,11 @@ export function KanbanBoard({
   }));
 
   return (
-    <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-4">
+    <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto pb-4 sm:snap-none sm:gap-4">
       {columns.map(({ status, videos: columnVideos }) => (
         <div
           key={status}
-          className="flex w-72 shrink-0 flex-col rounded-lg border bg-muted/30"
+          className="flex w-72 max-w-5/6 shrink-0 snap-start flex-col rounded-lg border bg-muted/30"
           onDragOver={(e) => {
             e.preventDefault();
             e.currentTarget.classList.add("ring-2", "ring-primary/30");

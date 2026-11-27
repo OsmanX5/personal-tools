@@ -140,10 +140,10 @@ export default function SubscriptionsClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Subscriptions</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Subscriptions</h1>
           <p className="text-sm text-muted-foreground">
             {filteredSubscriptions.length} of {subscriptions.length}{" "}
             subscriptions shown

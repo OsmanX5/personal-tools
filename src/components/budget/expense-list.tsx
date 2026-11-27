@@ -69,7 +69,7 @@ export function ExpenseList({
                 setFilterCategory(v as ExpenseCategory | "All")
               }
             >
-              <SelectTrigger className="h-7 w-[160px] text-xs">
+              <SelectTrigger className="h-7 w-32 text-xs sm:w-40">
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
@@ -117,8 +117,8 @@ export function ExpenseList({
                       }}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium truncate">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="min-w-0 truncate text-sm font-medium">
                           {expense.description || expense.category}
                         </span>
                         {expense.recurringMeta ? (
@@ -139,7 +139,7 @@ export function ExpenseList({
                           </Badge>
                         ) : null}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 ${CATEGORY_BG_COLORS[expense.category]}`}
@@ -151,44 +151,47 @@ export function ExpenseList({
                         </span>
                       </div>
                     </div>
-                    <span className="shrink-0 text-sm font-semibold">
-                      {symbol}
-                      {converted.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                    <div className="flex shrink-0 gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        title="Edit"
-                        onClick={() => onEdit(expense)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      {/* Stop recurring button — shown only for recurring instances */}
-                      {expense.recurringMeta && onStopRecurring && (
+                    {/* Phones: amount stacked over the actions to free width for the name. */}
+                    <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                      <span className="text-sm font-semibold">
+                        {symbol}
+                        {converted.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <div className="flex shrink-0 gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-amber-500 hover:text-amber-600"
-                          title="Stop recurring from this occurrence"
-                          onClick={() => onStopRecurring(expense)}
+                          className="h-7 w-7"
+                          title="Edit"
+                          onClick={() => onEdit(expense)}
                         >
-                          <StopCircle className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        title="Delete"
-                        onClick={() => onDelete(expense)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                        {/* Stop recurring button — shown only for recurring instances */}
+                        {expense.recurringMeta && onStopRecurring && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-amber-500 hover:text-amber-600"
+                            title="Stop recurring from this occurrence"
+                            onClick={() => onStopRecurring(expense)}
+                          >
+                            <StopCircle className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          title="Delete"
+                          onClick={() => onDelete(expense)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );

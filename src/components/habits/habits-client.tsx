@@ -227,11 +227,11 @@ export default function HabitsClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Habits Tracker</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Habits Tracker</h1>
           <p className="text-sm text-muted-foreground">
             {enrichedHabits.length} habit
             {enrichedHabits.length !== 1 ? "s" : ""} — {today}

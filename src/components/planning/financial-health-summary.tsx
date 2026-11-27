@@ -32,8 +32,7 @@ export function FinancialHealthSummary({
   hideValues,
 }: FinancialHealthSummaryProps) {
   const symbol = CURRENCY_SYMBOLS[displayCurrency];
-  const money = (value: number) =>
-    hideValues ? "****" : fmt(value, symbol);
+  const money = (value: number) => (hideValues ? "****" : fmt(value, symbol));
 
   if (!snapshot) {
     return (
@@ -111,7 +110,11 @@ export function FinancialHealthSummary({
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
       {cards.map((c) => (
-        <Card key={c.label}>
+        // An odd card out spans the full row on the 2-column phone grid.
+        <Card
+          key={c.label}
+          className="last:odd:col-span-2 lg:last:odd:col-span-1"
+        >
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-muted-foreground">

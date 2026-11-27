@@ -33,6 +33,7 @@ import {
   ASSET_CATEGORIES,
 } from "@/lib/networth-types";
 import { ToggleGroup } from "@/components/ui/toggle-group";
+import { useReveal } from "@/hooks/use-reveal";
 import {
   getNetWorthEnterTransition,
   NETWORTH_MOTION_FAST_DURATION,
@@ -43,6 +44,7 @@ type ListTab = "accounts" | "assets";
 
 export default function NetWorthClient() {
   const shouldReduceMotion = useReducedMotion();
+  const [detailRef, revealDetail] = useReveal();
   const [accounts, setAccounts] = useState<NetWorthAccount[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -436,7 +438,7 @@ export default function NetWorthClient() {
 
   return (
     <motion.div
-      className="flex h-full min-h-0 flex-col overflow-hidden"
+      className="flex min-h-0 flex-col lg:h-full lg:overflow-hidden"
       initial={shouldReduceMotion ? undefined : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
@@ -480,10 +482,10 @@ export default function NetWorthClient() {
           </div>
         </motion.div>
       ) : (
-        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+        <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row lg:overflow-hidden">
           {/* Account / asset list */}
           <motion.div
-            className="flex w-80 shrink-0 flex-col gap-3 overflow-hidden"
+            className="flex w-full shrink-0 flex-col gap-3 lg:w-80 lg:overflow-hidden"
             initial={shouldReduceMotion ? undefined : { opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
             transition={
@@ -503,7 +505,7 @@ export default function NetWorthClient() {
               }
             >
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold leading-none">NetWorth</h1>
+                <h1 className="text-2xl leading-none font-bold sm:text-3xl">NetWorth</h1>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -558,7 +560,7 @@ export default function NetWorthClient() {
               </motion.div>
             </motion.div>
             {/* Currency toggle */}
-            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+            <div className="flex flex-col gap-2 lg:min-h-0 lg:flex-1 lg:overflow-hidden">
               <motion.div
                 className="flex items-center gap-1.5 text-xs"
                 initial={shouldReduceMotion ? undefined : { opacity: 0, y: 8 }}
@@ -641,7 +643,7 @@ export default function NetWorthClient() {
                   />
                 )}
               </motion.div>
-              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="max-h-96 overflow-y-auto pr-1 lg:max-h-none lg:min-h-0 lg:flex-1">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={listTab}
@@ -690,6 +692,7 @@ export default function NetWorthClient() {
                               onSelect={(a) => {
                                 setSelectedAsset(null);
                                 setSelectedAccount(a);
+                                revealDetail();
                               }}
                               onEdit={(a) => {
                                 setEditingAccount(a);
@@ -736,6 +739,7 @@ export default function NetWorthClient() {
                               onSelect={(a) => {
                                 setSelectedAccount(null);
                                 setSelectedAsset(a);
+                                revealDetail();
                               }}
                               onEdit={(a) => {
                                 setEditingAsset(a);
@@ -788,7 +792,7 @@ export default function NetWorthClient() {
 
           {/* Right panel: summary + detail */}
           <motion.div
-            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+            className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:overflow-hidden"
             initial={shouldReduceMotion ? undefined : { opacity: 0, x: 18 }}
             animate={{ opacity: 1, x: 0 }}
             transition={
@@ -799,7 +803,7 @@ export default function NetWorthClient() {
           >
             {/* Net Worth Summary */}
             <motion.div
-              className="min-h-0 flex-[2]"
+              className="lg:min-h-0 lg:flex-[2]"
               initial={shouldReduceMotion ? undefined : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={
@@ -818,7 +822,10 @@ export default function NetWorthClient() {
             </motion.div>
 
             {/* Selected account or asset detail */}
-            <div className="min-h-0 flex-[3]">
+            <div
+              ref={detailRef}
+              className="h-mobile-panel scroll-mt-4 lg:h-auto lg:min-h-0 lg:flex-[3]"
+            >
               <AnimatePresence mode="wait" initial={false}>
                 {selectedAccount ? (
                   <motion.div

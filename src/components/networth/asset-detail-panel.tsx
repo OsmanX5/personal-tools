@@ -441,8 +441,8 @@ export function AssetDetailPanel({
                           {entry.note ?? "Valuation"}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                        <span className="text-xs text-muted-foreground max-sm:hidden">
                           {new Date(entry.date).toLocaleDateString()}
                         </span>
                         {delta !== null && !hideValues && (
@@ -472,7 +472,7 @@ export function AssetDetailPanel({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-destructive opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                          className="h-6 w-6 text-destructive transition-opacity hover-device:opacity-0 hover-device:group-hover:opacity-100 hover:text-destructive"
                           onClick={() => onDeleteValueEntry(asset._id, entry._id)}
                           title="Delete value entry"
                         >

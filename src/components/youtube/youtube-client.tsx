@@ -243,22 +243,22 @@ export default function YoutubeClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">YouTube Pipeline</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">YouTube Pipeline</h1>
           <p className="text-sm text-muted-foreground">
             {videos.length} video{videos.length !== 1 ? "s" : ""} ·{" "}
             {inProgressCount} in progress · {publishedCount} published
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {pillars.length > 1 && (
             <select
               value={pillarFilter}
               onChange={(e) => setPillarFilter(e.target.value)}
-              className="rounded-md border bg-background px-2 py-1 text-sm"
+              className="min-w-0 rounded-md border bg-background px-2 py-1.5 text-sm max-sm:flex-1 sm:py-1"
             >
               {pillars.map((p) => (
                 <option key={p} value={p}>
@@ -271,7 +271,7 @@ export default function YoutubeClient() {
             <select
               value={playlistFilter}
               onChange={(e) => setPlaylistFilter(e.target.value)}
-              className="rounded-md border bg-background px-2 py-1 text-sm"
+              className="min-w-0 rounded-md border bg-background px-2 py-1.5 text-sm max-sm:flex-1 sm:py-1"
             >
               <option value="All">All playlists</option>
               {playlists.map((p) => (

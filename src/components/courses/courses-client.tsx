@@ -234,10 +234,10 @@ export default function CoursesClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Header */}
       <motion.div
-        className="flex items-center justify-between"
+        className="flex flex-wrap items-center justify-between gap-3"
         initial={shouldReduceMotion ? false : { opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -250,7 +250,7 @@ export default function CoursesClient() {
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Courses Tracker</h1>
+            <h1 className="text-xl font-bold sm:text-2xl">Courses Tracker</h1>
             <p className="text-sm text-muted-foreground">
               {courses.length} course{courses.length !== 1 ? "s" : ""}
               {overallProgress !== null &&
@@ -391,7 +391,7 @@ export default function CoursesClient() {
 
       {/* Two-column layout: Wishlist sidebar + main content */}
       <motion.div
-        className="flex min-h-0 flex-1 gap-4"
+        className="flex flex-col gap-4 md:min-h-0 md:flex-1 md:flex-row"
         initial={shouldReduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{
@@ -401,7 +401,7 @@ export default function CoursesClient() {
         }}
       >
         {/* Wishlist sidebar */}
-        <div className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto">
+        <div className="flex w-full shrink-0 flex-col gap-2 md:w-72 md:overflow-y-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-blue-600 dark:text-blue-300" />
@@ -499,7 +499,7 @@ export default function CoursesClient() {
         </div>
 
         {/* Main content: other statuses */}
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto pb-4">
+        <div className="flex flex-col gap-5 pb-4 md:min-h-0 md:flex-1 md:overflow-y-auto">
           <AnimatePresence mode="popLayout">
             {(["In Progress", "Paused", "Completed", "Dropped"] as const).map(
               (status, i) => {

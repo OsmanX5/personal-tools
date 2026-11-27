@@ -146,24 +146,24 @@ export default function JobsClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Quick Links */}
       <QuickLinksBar />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Job Applications</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Job Applications</h1>
           <p className="text-sm text-muted-foreground">
             {filteredJobs.length} of {jobs.length} application
             {jobs.length !== 1 ? "s" : ""} shown
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-2 sm:w-auto sm:gap-3">
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="rounded-md border bg-background px-2 py-1 text-sm"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 text-sm sm:flex-none sm:py-1"
           >
             {countries.map((c) => (
               <option key={c} value={c}>
@@ -174,7 +174,7 @@ export default function JobsClient() {
           <select
             value={positionFilter}
             onChange={(e) => setPositionFilter(e.target.value)}
-            className="rounded-md border bg-background px-2 py-1 text-sm"
+            className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 text-sm sm:flex-none sm:py-1"
           >
             {POSITION_FILTERS.map((p) => (
               <option key={p} value={p}>

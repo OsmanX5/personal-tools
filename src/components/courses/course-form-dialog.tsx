@@ -98,7 +98,7 @@ export function CourseFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Course" : "Add Course"}
@@ -118,7 +118,7 @@ export function CourseFormDialog({
           </div>
 
           {/* Row 2: Platform, Type, Priority */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Platform *</Label>
               <Select
@@ -182,7 +182,7 @@ export function CourseFormDialog({
           </div>
 
           {/* Row 3: Status, Total Lessons, Completed Lessons */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Status</Label>
               <Select

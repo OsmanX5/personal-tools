@@ -549,7 +549,7 @@ export function TransactionDetailPanel({
                 {transactions.slice(0, 5).map((tx, index) => (
                   <motion.div
                     key={tx._id}
-                    className="group flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                    className="group flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
                     initial={
                       shouldReduceMotion ? undefined : { opacity: 0, y: 10 }
                     }
@@ -562,12 +562,12 @@ export function TransactionDetailPanel({
                           )
                     }
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       {TRANSACTION_ICON[tx.type]}
-                      <span>{tx.type}</span>
+                      <span className="truncate">{tx.type}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-muted-foreground text-xs">
+                    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                      <span className="text-xs text-muted-foreground max-sm:hidden">
                         {new Date(tx.date).toLocaleDateString()}
                       </span>
                       <span
@@ -586,7 +586,7 @@ export function TransactionDetailPanel({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-destructive opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        className="h-6 w-6 text-destructive transition-opacity hover-device:opacity-0 hover-device:group-hover:opacity-100 hover:text-destructive"
                         onClick={() => onDeleteTransaction(account._id, tx._id)}
                         title="Delete transaction"
                       >

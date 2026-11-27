@@ -38,7 +38,7 @@ export function HabitsOverview({ habits }: HabitsOverviewProps) {
     <div className="grid grid-cols-3 gap-3">
       {stats.map(({ label, value, icon: Icon, color }) => (
         <Card key={label} className="flex items-center gap-3 p-3">
-          <Icon className={`h-5 w-5 shrink-0 ${color}`} />
+          <Icon className={`h-5 w-5 shrink-0 max-sm:hidden ${color}`} />
           <div className="min-w-0">
             <p className="text-xl font-bold leading-tight">{value}</p>
             <p className="truncate text-xs text-muted-foreground">{label}</p>

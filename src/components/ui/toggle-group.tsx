@@ -31,7 +31,13 @@ export function ToggleGroup<T extends string>({
   buttonClassName,
 }: ToggleGroupProps<T>) {
   return (
-    <div className={cn("flex gap-1", className)}>
+    <div
+      className={cn(
+        // Scrolls sideways instead of overflowing on narrow screens.
+        "scrollbar-none flex max-w-full gap-1 overflow-x-auto",
+        className,
+      )}
+    >
       {items.map((item) => {
         const itemValue = getItemValue(item);
         const itemLabel = getItemLabel(item);

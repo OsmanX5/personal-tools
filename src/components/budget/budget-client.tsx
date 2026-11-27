@@ -481,11 +481,11 @@ export default function BudgetClient() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Budget Planner</h1>
+          <h1 className="text-xl font-bold sm:text-2xl">Budget Planner</h1>
           <p className="text-sm text-muted-foreground">
             {expenses.length} expense{expenses.length !== 1 ? "s" : ""} this
             month —{" "}
@@ -512,7 +512,7 @@ export default function BudgetClient() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="min-w-[140px] text-center text-sm font-medium">
+          <span className="min-w-36 text-center text-sm font-medium">
             {monthLabel}
           </span>
           <Button
@@ -548,10 +548,10 @@ export default function BudgetClient() {
         </div>
 
         {/* Spacer */}
-        <div className="flex-1" />
+        <div className="hidden flex-1 sm:block" />
 
-        {/* Tabs */}
-        <div className="flex rounded-md border text-sm">
+        {/* Tabs — full width on phones */}
+        <div className="flex w-full rounded-md border text-sm sm:w-auto">
           {(
             [
               { key: "expenses", label: "Expenses" },
@@ -563,7 +563,7 @@ export default function BudgetClient() {
               key={key}
               type="button"
               onClick={() => setTab(key)}
-              className={`px-3 py-1.5 transition-colors ${
+              className={`flex-1 px-3 py-2 whitespace-nowrap transition-colors sm:flex-none sm:py-1.5 ${
                 i > 0 ? "border-l" : ""
               } ${
                 tab === key
@@ -591,9 +591,9 @@ export default function BudgetClient() {
               month={month}
               year={year}
             />
-            <div className="flex min-h-0 flex-1 gap-4">
+            <div className="flex flex-col gap-4 lg:min-h-0 lg:flex-1 lg:flex-row">
               {/* Left: expense list */}
-              <div className="min-h-0 w-1/2">
+              <div className="min-h-0 lg:w-1/2">
                 <ExpenseList
                   expenses={expenses}
                   displayCurrency={displayCurrency}
@@ -611,7 +611,7 @@ export default function BudgetClient() {
                 />
               </div>
               {/* Right: chart */}
-              <div className="h-full w-1/2 shrink-0">
+              <div className="h-80 shrink-0 lg:sticky lg:top-0 lg:h-96 lg:w-1/2 lg:self-start">
                 <CategoryBreakdownChart
                   expenses={expenses}
                   displayCurrency={displayCurrency}

@@ -12,15 +12,15 @@ import { ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Personal Tools</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Personal Tools</h1>
         <p className="text-muted-foreground mt-2">
           A collection of small tools to help organize your life.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         {tools.map((tool) => {
           const Icon = tool.icon;
           return (
@@ -35,11 +35,13 @@ export default function HomePage() {
                       <Badge variant="secondary">Coming Soon</Badge>
                     )}
                   </div>
-                  <CardTitle className="mt-4">{tool.name}</CardTitle>
-                  <CardDescription>{tool.description}</CardDescription>
+                  <CardTitle className="mt-3 sm:mt-4">{tool.name}</CardTitle>
+                  <CardDescription className="line-clamp-3 sm:line-clamp-none">
+                    {tool.description}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <span className="inline-flex items-center gap-1 text-sm text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                <CardContent className="max-sm:hidden">
+                  <span className="inline-flex items-center gap-1 text-sm text-primary transition-opacity hover-device:opacity-0 hover-device:group-hover:opacity-100">
                     Open <ArrowRight className="h-3 w-3" />
                   </span>
                 </CardContent>

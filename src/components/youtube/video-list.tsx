@@ -43,7 +43,7 @@ export function VideoList({
 
   return (
     <ScrollArea className="min-h-0 flex-1 rounded-lg border">
-      <table className="w-full text-sm">
+      <table className="w-full min-w-3xl text-sm">
         <thead className="sticky top-0 bg-muted/60 backdrop-blur">
           <tr className="text-left text-xs text-muted-foreground">
             <th className="px-3 py-2 font-medium">Title</th>
@@ -69,7 +69,7 @@ export function VideoList({
                 key={video._id}
                 className="border-t transition-colors hover:bg-muted/30"
               >
-                <td className="max-w-[260px] px-3 py-2">
+                <td className="max-w-64 px-3 py-2">
                   <div className="flex items-center gap-1.5">
                     <span className="truncate font-medium">{video.title}</span>
                     {video.videoUrl && (
