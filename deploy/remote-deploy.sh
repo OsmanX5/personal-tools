@@ -183,7 +183,7 @@ fi
 # Remove older images of this app only, not other apps on the VM.
 IMAGE_REPO="${IMAGE%:*}"
 run_docker images "$IMAGE_REPO" --format '{{.Repository}}:{{.Tag}}' \
-  | grep -vx "$IMAGE" \
+  | { grep -vx "$IMAGE" || true; } \
   | while read -r old; do run_docker rmi "$old" >/dev/null 2>&1 || true; done
 run_docker image prune -f >/dev/null
 run_docker compose --env-file ./.deploy.env ps
