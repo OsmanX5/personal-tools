@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Runs on the VM (called by .github/workflows/deploy.yml). Nothing needs to be
-# set up by hand: it builds/starts the app, attaches it to the existing Caddy
+# set up by hand: it pulls the image built on GitHub from ghcr.io, starts it, attaches it to the existing Caddy
 # container's network, and adds the site to that Caddy's config.
 #
-# The SSH password arrives on stdin and is only used for sudo when the SSH
-# user cannot talk to Docker directly.
+# stdin carries two lines: the SSH password (only used for sudo when the SSH
+# user cannot talk to Docker directly) and a short-lived ghcr.io pull token.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 IFS= read -r SUDO_PASS || true
+IFS= read -r GHCR_TOKEN || true
 
 if docker info >/dev/null 2>&1; then
   run_docker() { docker "$@"; }
@@ -19,21 +20,38 @@ fi
 fail() { echo "::error::$*" >&2; exit 1; }
 log() { echo "==> $*"; }
 
-# Deploy settings written by the workflow: DOMAIN, APP_HOST_PORT, CADDY_CONTAINER, CADDY_NETWORK
+# Deploy settings written by the workflow:
+#   IMAGE, REGISTRY, REGISTRY_USER, DOMAIN, APP_PORT, CADDY_CONTAINER, CADDY_NETWORK
 # shellcheck disable=SC1091
 source ./.deploy.env
-export APP_HOST_PORT="${APP_HOST_PORT:-3100}"
+APP_PORT="${APP_PORT:-9500}"
 APP_CONTAINER=personal-tools-app
-APP_PORT=3000
 MARK_NAME=personal-tools-app
+[ -n "${IMAGE:-}" ] || fail "IMAGE is missing from .deploy.env"
+[ -n "$GHCR_TOKEN" ] || fail "No registry token received on stdin"
 
 run_docker compose version >/dev/null 2>&1 \
   || fail "Docker Engine with the compose plugin must be installed on the VM"
 
-# --- 1. Build and start the app ---------------------------------------------
-log "Building and starting $APP_CONTAINER"
-# sudo drops the environment, so pass the port explicitly.
-run_docker compose --env-file ./.deploy.env up -d --build --remove-orphans
+# --- 1. Pull the image and start the app ----------------------------------------
+# Log in with a throwaway Docker config so the token is never saved in
+# ~/.docker or root's config, and never needs stdin (sudo may be reading it).
+REG_CONFIG=$(mktemp -d)
+trap 'rm -rf "$REG_CONFIG"' EXIT
+chmod 700 "$REG_CONFIG"
+AUTH=$(printf '%s:%s' "$REGISTRY_USER" "$GHCR_TOKEN" | base64 | tr -d '\n')
+printf '{"auths":{"%s":{"auth":"%s"}}}\n' "$REGISTRY" "$AUTH" > "$REG_CONFIG/config.json"
+
+log "Pulling $IMAGE"
+if ! run_docker --config "$REG_CONFIG" pull "$IMAGE"; then
+  ARCH=$(uname -m)
+  fail "Could not pull $IMAGE. This VM is $ARCH; if that is not x86_64, set the IMAGE_PLATFORM variable in GitHub, for example linux/arm64."
+fi
+rm -rf "$REG_CONFIG"
+
+log "Starting $APP_CONTAINER on port $APP_PORT"
+# sudo drops the environment, so compose reads IMAGE and APP_PORT from the file.
+run_docker compose --env-file ./.deploy.env up -d --remove-orphans
 
 # --- 2. Find the existing Caddy container ------------------------------------
 if [ -z "${CADDY_CONTAINER:-}" ]; then
@@ -49,7 +67,7 @@ caddy_exec() { run_docker exec "$CADDY_CONTAINER" "$@"; }
 # --- 3. Put the app on Caddy's network ---------------------------------------
 CADDY_NETWORKS=$(run_docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$CADDY_CONTAINER")
 if [ "$(run_docker inspect -f '{{.HostConfig.NetworkMode}}' "$CADDY_CONTAINER")" = "host" ]; then
-  UPSTREAM="localhost:$APP_HOST_PORT"
+  UPSTREAM="localhost:$APP_PORT"
   log "Caddy uses host networking; proxying to $UPSTREAM"
 else
   if [ -z "${CADDY_NETWORK:-}" ]; then
@@ -162,6 +180,10 @@ else
 fi
 
 # --- 5. Clean up ---------------------------------------------------------------
-# Only dangling images from this project, not other apps on the VM.
-run_docker image prune -f --filter "label=com.docker.compose.project=$(basename "$PWD")"
+# Remove older images of this app only, not other apps on the VM.
+IMAGE_REPO="${IMAGE%:*}"
+run_docker images "$IMAGE_REPO" --format '{{.Repository}}:{{.Tag}}' \
+  | grep -vx "$IMAGE" \
+  | while read -r old; do run_docker rmi "$old" >/dev/null 2>&1 || true; done
+run_docker image prune -f >/dev/null
 run_docker compose --env-file ./.deploy.env ps

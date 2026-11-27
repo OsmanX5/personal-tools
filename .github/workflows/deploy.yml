@@ -9,6 +9,9 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+# The image is built here on GitHub, pushed to GitHub Container Registry
+# (ghcr.io), and the VM only pulls and runs it.
+#
 # Set these in GitHub → Settings → Secrets and variables → Actions.
 #
 # Secrets:
@@ -24,7 +27,8 @@ concurrency:
 #   DEPLOY_PATH      personal-tools   (relative to the SSH user's home, or absolute)
 #   DOMAIN           personal.osmanelfaki.com
 #   MONGODB_DB_NAME  personal-tools
-#   APP_HOST_PORT    3100  (localhost-only port, used when Caddy runs with host networking)
+#   APP_PORT         9500  (port the app listens on, inside the container and on the VM's localhost)
+#   IMAGE_PLATFORM   linux/amd64  (set to linux/arm64 for an ARM VM)
 #   CADDY_CONTAINER  (auto-detected: the running container whose name/image contains "caddy")
 #   CADDY_NETWORK    (auto-detected: the Caddy container's first network)
 #
@@ -36,13 +40,61 @@ env:
   DEPLOY_PATH: ${{ vars.DEPLOY_PATH || 'personal-tools' }}
   DOMAIN: ${{ vars.DOMAIN || 'personal.osmanelfaki.com' }}
   MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME || 'personal-tools' }}
-  APP_HOST_PORT: ${{ vars.APP_HOST_PORT || '3100' }}
+  APP_PORT: ${{ vars.APP_PORT || '9500' }}
+  IMAGE_PLATFORM: ${{ vars.IMAGE_PLATFORM || 'linux/amd64' }}
   CADDY_CONTAINER: ${{ vars.CADDY_CONTAINER }}
   CADDY_NETWORK: ${{ vars.CADDY_NETWORK }}
+  REGISTRY: ghcr.io
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Image name
+        id: name
+        run: |
+          repo="${GITHUB_REPOSITORY,,}"   # ghcr needs lowercase
+          echo "repo=$REGISTRY/$repo" >> "$GITHUB_OUTPUT"
+          echo "image=$REGISTRY/$repo:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-qemu-action@v3
+        if: env.IMAGE_PLATFORM != 'linux/amd64'
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ env.IMAGE_PLATFORM }}
+          push: true
+          tags: |
+            ${{ steps.name.outputs.image }}
+            ${{ steps.name.outputs.repo }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    env:
+      IMAGE: ${{ needs.build.outputs.image }}
     steps:
       - uses: actions/checkout@v5
 
@@ -85,35 +137,39 @@ jobs:
             printf 'SESSION_SECRET=%s\n' "$SESSION_SECRET"
           } > .env
           {
+            printf 'IMAGE=%q\n' "$IMAGE"
+            printf 'REGISTRY=%q\n' "$REGISTRY"
+            printf 'REGISTRY_USER=%q\n' "$GITHUB_ACTOR"
             printf 'DOMAIN=%q\n' "$DOMAIN"
-            printf 'APP_HOST_PORT=%q\n' "$APP_HOST_PORT"
+            printf 'APP_PORT=%q\n' "$APP_PORT"
             printf 'CADDY_CONTAINER=%q\n' "$CADDY_CONTAINER"
             printf 'CADDY_NETWORK=%q\n' "$CADDY_NETWORK"
           } > .deploy.env
 
-      - name: Upload project to VM
+      - name: Upload deploy files to VM
         env:
           SSHPASS: ${{ secrets.VM_PASSWORD }}
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USERNAME: ${{ secrets.VM_USERNAME }}
         run: |
-          tar czf - \
-            --exclude=.git --exclude=node_modules --exclude=.next \
-            . \
+          # Only what the VM needs to pull and run the image — no source code.
+          tar czf - docker-compose.yml deploy/remote-deploy.sh .env .deploy.env \
           | sshpass -e ssh -p "$VM_PORT" \
               -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
               "$VM_USERNAME@$VM_HOST" \
-              "mkdir -p '$DEPLOY_PATH' && tar xzf - -C '$DEPLOY_PATH' && chmod 600 '$DEPLOY_PATH/.env'"
+              "mkdir -p '$DEPLOY_PATH' && tar xzf - -C '$DEPLOY_PATH' && chmod 600 '$DEPLOY_PATH/.env' '$DEPLOY_PATH/.deploy.env'"
 
-      - name: Build and start containers
+      - name: Pull image and start container
         env:
           SSHPASS: ${{ secrets.VM_PASSWORD }}
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USERNAME: ${{ secrets.VM_USERNAME }}
           VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # The password goes over stdin (for sudo), never on a command line.
-          printf '%s\n' "$VM_PASSWORD" \
+          # Line 1: password for sudo. Line 2: short-lived token to pull from ghcr.io
+          # (expires when this job ends). Neither appears on a command line.
+          printf '%s\n%s\n' "$VM_PASSWORD" "$GHCR_TOKEN" \
           | sshpass -e ssh -p "$VM_PORT" \
               -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
               "$VM_USERNAME@$VM_HOST" \

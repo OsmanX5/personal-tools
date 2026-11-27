@@ -1,13 +1,17 @@
-# Production: the Next.js app, reached by the Caddy container already running on
-# the VM (deploy/remote-deploy.sh joins this container to Caddy's network and
-# adds the site to its Caddyfile). The deploy workflow writes .env.
+# Production: runs the image that the deploy workflow built and pushed to
+# ghcr.io. deploy/remote-deploy.sh joins this container to the network of the
+# Caddy container already on the VM and adds the site to its Caddyfile.
+# The deploy workflow writes .env (app secrets) and .deploy.env (IMAGE, APP_PORT).
 services:
   app:
-    build: .
-    image: personal-tools:latest
+    image: ${IMAGE:?IMAGE is set by the deploy workflow}
     container_name: personal-tools-app
     restart: unless-stopped
     env_file: .env
-    # Bound to localhost only; used when Caddy runs with host networking.
+    environment:
+      PORT: ${APP_PORT:-9500}
+    expose:
+      - "${APP_PORT:-9500}"
+    # Localhost only: the public site goes through Caddy over HTTPS.
     ports:
-      - "127.0.0.1:${APP_HOST_PORT:-3100}:3000"
+      - "127.0.0.1:${APP_PORT:-9500}:${APP_PORT:-9500}"
