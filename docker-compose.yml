@@ -1,0 +1,13 @@
+# Production: the Next.js app, reached by the Caddy container already running on
+# the VM (deploy/remote-deploy.sh joins this container to Caddy's network and
+# adds the site to its Caddyfile). The deploy workflow writes .env.
+services:
+  app:
+    build: .
+    image: personal-tools:latest
+    container_name: personal-tools-app
+    restart: unless-stopped
+    env_file: .env
+    # Bound to localhost only; used when Caddy runs with host networking.
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT:-3100}:3000"

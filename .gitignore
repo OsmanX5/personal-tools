@@ -43,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# deploy workflow settings
+.deploy.env
+.caddy-backup.Caddyfile

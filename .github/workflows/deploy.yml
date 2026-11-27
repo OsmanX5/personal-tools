@@ -1,0 +1,133 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+# Set these in GitHub → Settings → Secrets and variables → Actions.
+#
+# Secrets:
+#   VM_HOST         VM IP address or hostname
+#   VM_USERNAME     SSH user name
+#   VM_PASSWORD     SSH password (also used for sudo if the user is not in the docker group)
+#   MONGODB_URI     MongoDB connection string
+#   APP_PASSWORD    Password that unlocks the app
+#   SESSION_SECRET  iron-session secret (min 32 chars)
+#
+# Variables (optional, defaults shown):
+#   VM_PORT          22
+#   DEPLOY_PATH      personal-tools   (relative to the SSH user's home, or absolute)
+#   DOMAIN           personal.osmanelfaki.com
+#   MONGODB_DB_NAME  personal-tools
+#   APP_HOST_PORT    3100  (localhost-only port, used when Caddy runs with host networking)
+#   CADDY_CONTAINER  (auto-detected: the running container whose name/image contains "caddy")
+#   CADDY_NETWORK    (auto-detected: the Caddy container's first network)
+#
+# The deploy configures the existing Caddy container on the VM by itself;
+# no manual setup on the VM is needed beyond Docker being installed.
+
+env:
+  VM_PORT: ${{ vars.VM_PORT || '22' }}
+  DEPLOY_PATH: ${{ vars.DEPLOY_PATH || 'personal-tools' }}
+  DOMAIN: ${{ vars.DOMAIN || 'personal.osmanelfaki.com' }}
+  MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME || 'personal-tools' }}
+  APP_HOST_PORT: ${{ vars.APP_HOST_PORT || '3100' }}
+  CADDY_CONTAINER: ${{ vars.CADDY_CONTAINER }}
+  CADDY_NETWORK: ${{ vars.CADDY_NETWORK }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check required secrets
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USERNAME: ${{ secrets.VM_USERNAME }}
+          VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          missing=0
+          for name in VM_HOST VM_USERNAME VM_PASSWORD MONGODB_URI APP_PASSWORD SESSION_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name is not set"
+              missing=1
+            fi
+          done
+          if [ -n "$SESSION_SECRET" ] && [ ${#SESSION_SECRET} -lt 32 ]; then
+            echo "::error::SESSION_SECRET must be at least 32 characters"
+            missing=1
+          fi
+          exit $missing
+
+      - name: Install sshpass
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+
+      - name: Write production .env and deploy settings
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          umask 077
+          {
+            printf 'MONGODB_URI=%s\n' "$MONGODB_URI"
+            printf 'MONGODB_DB_NAME=%s\n' "$MONGODB_DB_NAME"
+            printf 'APP_PASSWORD=%s\n' "$APP_PASSWORD"
+            printf 'SESSION_SECRET=%s\n' "$SESSION_SECRET"
+          } > .env
+          {
+            printf 'DOMAIN=%q\n' "$DOMAIN"
+            printf 'APP_HOST_PORT=%q\n' "$APP_HOST_PORT"
+            printf 'CADDY_CONTAINER=%q\n' "$CADDY_CONTAINER"
+            printf 'CADDY_NETWORK=%q\n' "$CADDY_NETWORK"
+          } > .deploy.env
+
+      - name: Upload project to VM
+        env:
+          SSHPASS: ${{ secrets.VM_PASSWORD }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USERNAME: ${{ secrets.VM_USERNAME }}
+        run: |
+          tar czf - \
+            --exclude=.git --exclude=node_modules --exclude=.next \
+            . \
+          | sshpass -e ssh -p "$VM_PORT" \
+              -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
+              "$VM_USERNAME@$VM_HOST" \
+              "mkdir -p '$DEPLOY_PATH' && tar xzf - -C '$DEPLOY_PATH' && chmod 600 '$DEPLOY_PATH/.env'"
+
+      - name: Build and start containers
+        env:
+          SSHPASS: ${{ secrets.VM_PASSWORD }}
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USERNAME: ${{ secrets.VM_USERNAME }}
+          VM_PASSWORD: ${{ secrets.VM_PASSWORD }}
+        run: |
+          # The password goes over stdin (for sudo), never on a command line.
+          printf '%s\n' "$VM_PASSWORD" \
+          | sshpass -e ssh -p "$VM_PORT" \
+              -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
+              "$VM_USERNAME@$VM_HOST" \
+              "bash '$DEPLOY_PATH/deploy/remote-deploy.sh'"
+
+      - name: Check site
+        run: |
+          for i in $(seq 1 12); do
+            # /login is public; the rest of the app redirects there.
+            if curl -fsS -o /dev/null --max-time 10 "https://$DOMAIN/login"; then
+              echo "https://$DOMAIN is up"
+              exit 0
+            fi
+            echo "Waiting for https://$DOMAIN ($i/12)..."
+            sleep 10
+          done
+          echo "::warning::https://$DOMAIN did not respond yet; check that DNS points to the VM and see 'docker compose logs' / the Caddy container logs"
