@@ -3,6 +3,7 @@ import { Roboto, Roboto_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { Toaster } from "@/components/ui/sonner";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -19,6 +20,13 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "Personal Tools",
   description: "A collection of personal productivity tools.",
+  applicationName: "Personal Tools",
+  appleWebApp: {
+    capable: true,
+    title: "Tools",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
@@ -47,6 +55,7 @@ export default function RootLayout({
           <AppShell>{children}</AppShell>
           <Toaster />
         </ThemeProvider>
+        <PwaRegister />
       </body>
     </html>
   );
